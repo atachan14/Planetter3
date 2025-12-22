@@ -37,6 +37,27 @@ def fetch_user_data(cur, user_id, now) -> User | None:
         now=now,
     )
 
+def fetch_user_at(cur, planet_id: int, x: int, y: int) -> User | None:
+    cur.execute("""
+        SELECT id, username, planet_id, x, y, direction, stardust, created_at
+        FROM users
+        WHERE planet_id = %s AND x = %s AND y = %s
+        LIMIT 1
+    """, (planet_id, x, y))
+    row = cur.fetchone()
+    if row is None:
+        return None
+    return User(
+        id=row["id"],
+        username=row["username"],
+        planet_id=row["planet_id"],
+        x=row["x"],
+        y=row["y"],
+        direction=row["direction"],
+        stardust=row["stardust"],
+        created_at=row["created_at"],
+        now=None,  # surround表示では不要なら None でOK
+    )
 
 def fetch_planet_data(cur, planet_id, now) -> Planet:
     cur.execute("""
@@ -80,8 +101,11 @@ SURROUND_BASE = {
     5: (0, 0),
     6: (1,  0),
 }
+def wrap_coord(x: int, y: int, planet: Planet) -> tuple[int, int]:
+    return x % planet.width, y % planet.height
 
 def fetch_tile_at(cur, planet_id,tx,ty):
+    
     return
 
 def fetch_object_at(cur,planet_id,tx,ty):
@@ -89,14 +113,36 @@ def fetch_object_at(cur,planet_id,tx,ty):
 
 def fetch_surround_data(cur, self_data: User, planet_data: Planet) -> Surround:
     # here (center)
-    obj = fetch_object_at(cur, planet_data.id, self_data.x, self_data.y)
+    obj = fetch_object_at(
+        cur,
+        planet_data.id,
+        self_data.x,
+        self_data.y,
+    )
 
-    # surround
     tiles: dict[int, Tile] = {}
+
     for pos, (dx, dy) in SURROUND_BASE.items():
+        # 向き補正
         rdx, rdy = rotate(dx, dy, self_data.direction)
+
+        # 生座標
         tx = self_data.x + rdx
         ty = self_data.y + rdy
+
+        # トーラス補正
+        tx, ty = wrap_coord(tx, ty, planet_data)
+
+        # 他ユーザー優先
+        other_user = fetch_user_at(cur, planet_data.id, tx, ty)
+        if other_user:
+            tiles[pos] = Tile(
+                kind="user",
+                content=other_user.username,
+            )
+            continue
+
+        # 通常タイル
         tiles[pos] = fetch_tile_at(cur, planet_data.id, tx, ty)
 
     return Surround(
