@@ -1,0 +1,14 @@
+{% extends 'base.jinja' %} {% block body %}
+<div class="main-root">
+  <header>{% include 'head-bar.jinja' %}</header>
+
+  <div class="layout-cutter">
+    <main>
+      {% include content_template %}
+    </main>
+    <aside>{% include 'aside-bar.jinja' %}</aside>
+  </div>
+
+  <footer>{% include 'foot-bar.jinja' %}</footer>
+</div>
+{% endblock %}

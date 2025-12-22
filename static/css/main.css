@@ -1,0 +1,183 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+button {
+    padding: 0.1em 0.375em;
+}
+
+.flex-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.flex-row {
+    display: flex;
+    flex-direction: row;
+}
+
+.flex-section {
+    flex: 1;
+}
+
+.red-text {
+    color: #ff0000;
+}
+
+.glay-text {
+    color: #eee;
+}
+
+/* body */
+body {
+    background: #111;
+    color: #eee;
+    font-family: sans-serif;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100dvh;
+    padding-bottom: env(safe-area-inset-bottom);
+    text-align: center;
+    margin: 0;
+}
+
+/* top */
+.site-title {
+    font-size: clamp(3rem, 10vw, 15rem);
+    margin: 0.5em 0;
+}
+
+.login-box {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 2vh;
+}
+
+.login-box>* {
+    height: 4vh;
+    width: clamp(10rem, 30vw, 15rem);
+    max-width: 300px;
+}
+
+/* layout-main */
+.main-root {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    text-align: center;
+    margin: 0;
+}
+
+.main-root header {
+    height: 5vh;
+}
+
+.main-root footer {
+    height: 5vh;
+}
+
+.main-root .layout-cutter {
+    display: flex;
+    height: 100%;
+    flex: 1;
+}
+
+.main-root main {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.main-root aside {
+    padding: 3vh;
+    width: 150px;
+}
+
+.main-root .aside-opener {
+    display: none;
+}
+
+@media (max-width: 767px) {
+    .main-root aside {
+        display: none;
+    }
+
+    .main-root .aside-opener {
+        display: block;
+        position: absolute;
+        bottom: 1vh;
+        right: 2vh;
+        width: 20vw;
+        height: 10vw;
+        font-size: 1rem;
+    }
+
+    .main-root aside.open {
+        display: block;
+        position: absolute;
+        top: 1vh;
+        right: 1vh;
+    }
+}
+
+/* head-bar */
+.head-bar {
+    background-color: #555;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1vh 2vw;
+    font-size: 1rem;
+}
+
+/* foot-bar */
+.foot-bar {
+    background-color: #555;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1vh 2vw;
+    font-size: 1rem;
+}
+
+/* landing */
+.landing-image {
+    height: 30vh;
+    object-fit: contain;
+}
+
+/* planet-grid */
+.planet-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+}
+
+.planet-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 4fr 1fr;
+    grid-template-rows: auto 1fr;
+    overflow: hidden;
+    position: relative;
+}
+
+.planet-grid>* {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.planet-grid .surround {
+    font-size: 0.75rem;
+}

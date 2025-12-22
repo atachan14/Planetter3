@@ -1,0 +1,5 @@
+flask
+gunicorn
+psycopg2-binary
+python-dotenv
+# python-3.12.8
