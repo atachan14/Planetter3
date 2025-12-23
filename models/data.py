@@ -1,9 +1,27 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
 
 @dataclass
-class User:
+class CreatedAtMixin:
+    created_at: datetime
+
+    @property
+    def f_created_at(self) -> str:
+        return self.created_at.strftime("%Y-%m-%d %H:%M")
+
+
+
+@dataclass
+class NowMixin(CreatedAtMixin):
+    now: datetime
+
+    @property
+    def survive_days(self) -> int:
+        return (self.now.date() - self.created_at.date()).days
+
+    
+@dataclass
+class User(NowMixin):
     id: int
     username: str
     planet_id: int
@@ -11,30 +29,14 @@ class User:
     y: int
     direction: int
     stardust: int
-    created_at: datetime
-
-    now: datetime
-
-    @property
-    def survive_days(self):
-        return (self.now.date() - self.created_at.date()).days
-
 
 @dataclass
-class Planet:
+class Planet(NowMixin):
     id: int
     name: str
     width: int
     height: int
-    created_at: datetime
     created_name: str
-    
-    now: datetime
-
-    @property
-    def survive_days(self):
-        return (self.now.date() - self.created_at.date()).days
-
 
 @dataclass(frozen=True)
 class Tile:
@@ -47,10 +49,13 @@ class NoneTile(Tile):
     content: str = ""
     
 @dataclass
-class Object:
+class Object(CreatedAtMixin):
     id: int
     kind: str
     content: str
+    good:int
+    bad:int
+    created_name:str
     children: list["Object"] = field(default_factory=list)
 
 @dataclass

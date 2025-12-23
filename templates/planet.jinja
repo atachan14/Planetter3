@@ -1,17 +1,35 @@
+{% set s7 = surround_data.s7 %}
+{% set s8 = surround_data.s8 %}
+{% set s9 = surround_data.s9 %}
+{% set s4 = surround_data.s4 %}
+{% set s5 = surround_data.s5 %}
+{% set s6 = surround_data.s6 %}
 <div class="planet-layout">
   <div class="planet-grid">
-    <div class="surround"></div>
-    <div class="surround"></div>
-    <div class="surround"></div>
-
-    <div class="surround"></div>
-    <div class="here"></div>
-    <div class="surround"></div>
+    <div class="surround {{ s7.kind or 'none' }}">{{ s7.content }}</div>
+    <div class="surround {{ s8.kind or 'none' }}">{{ s8.content }}</div>
+    <div class="surround {{ s9.kind or 'none' }}">{{ s9.content }}</div>
+    <div class="surround {{ s4.kind or 'none' }}">{{ s4.content }}</div>
+    <div class="here">
+      {% if s5 %}
+        {% include "here/" ~ s5.kind ~ ".jinja" %}
+      {% else %}
+        {% include "here/none.jinja" %}
+      {% endif %}
+    </div>
+    <div class="surround {{ s6.kind or 'none' }}">{{ s6.content }}</div>
   </div>
-
   <div class="planet-move">
-    <button type="submit" name="action" value="left_turn">左を向く</button>
-    <button type="submit" name="action" >歩く</button>
-    <button type="submit" name="action" value="right_turn">右を向く</button>
+    <form method="post" action="/">
+      <button type="submit" name="action" value="left_turn">左を向く</button>
+      <button type="submit" name="action" value="next_pos">
+        {% if s8.kind == 'user' %}
+          contact
+        {% else %}
+          歩く
+        {% endif %}
+      </button>
+      <button type="submit" name="action" value="right_turn">右を向く</button>
+    </form>
   </div>
 </div>

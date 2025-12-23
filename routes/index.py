@@ -1,5 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, session, flash
 from psycopg2.extras import RealDictCursor
+from services.errors import DomainDataError,InvalidStateError
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 from db import get_db
 from services.data import (
@@ -7,7 +12,6 @@ from services.data import (
     fetch_user_data,
     fetch_planet_data,
     fetch_surround_data,
-    fetch_here_data,
     fetch_galaxy_data,
 )
 
@@ -42,7 +46,7 @@ def index_get():
             content_template = "landing.jinja"
 
         elif state == "planet":
-            surroundData = fetch_surround_data(cur, self_id)
+            surroundData = fetch_surround_data(cur, self_data, planet_data)
             content_template = "planet.jinja"
 
         elif state == "galaxy":
@@ -51,7 +55,13 @@ def index_get():
 
         else:
             # 保険
-            content_template = "error.jinja"
+            logger.warning(f"invalid state: {state}")
+            raise InvalidStateError(f"invalid state: {state}")
+
+    except DomainDataError:
+        return render_template("error.jinja")
+    except InvalidStateError:
+        return render_template("error.jinja")
 
     finally:
         cur.close()
@@ -82,9 +92,11 @@ def index_post():
     if action == "logout":
         handle_logout(session)
 
-    if action == "go_planet":
-        #　ここを通ったか確認するためのデバッグログ出したいんだけど何て書けばいい？
+    if action == "enter_planet":
         session["state"] = "planet"
 
     # その他 action
+
     return redirect("/")
+
+

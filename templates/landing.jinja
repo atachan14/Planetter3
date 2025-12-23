@@ -1,8 +1,11 @@
 <div class="landing-root">
-  <img class="landing-image" src="{{ url_for('static', filename='img/landing.png') }}" alt="landing" />
-
+  <img class="landing-image"
+       src="{{ url_for('static', filename='img/landing.png') }}"
+       width="200"
+       height="200"
+       alt="landing" />
   <div>{{ planet_data.name }}へようこそ！</div>
-  <form class="landing-box" method="POST" action="/">
-    <button type="submit" name="action" value="go_planet">着陸する</button>
+  <form class="landing-box" method="post" action="/">
+    <button type="submit" name="action" value="enter_planet">着陸する</button>
   </form>
 </div>
