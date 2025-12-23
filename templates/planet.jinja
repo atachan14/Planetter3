@@ -19,17 +19,15 @@
     </div>
     <div class="surround {{ s6.kind or 'none' }}">{{ s6.content }}</div>
   </div>
-  <div class="planet-move">
-    <form method="post" action="/">
-      <button type="submit" name="action" value="left_turn">左を向く</button>
-      <button type="submit" name="action" value="next_pos">
-        {% if s8.kind == 'user' %}
-          contact
-        {% else %}
-          歩く
-        {% endif %}
-      </button>
-      <button type="submit" name="action" value="right_turn">右を向く</button>
-    </form>
-  </div>
+  <form class="planet-commond flex-row" method="post" action="/">
+    <button type="submit" name="action" value="left_turn">左を向く</button>
+    <button type="submit" name="action" value="next_pos">
+      {% if s8.kind == 'user' %}
+        contact
+      {% else %}
+        歩く
+      {% endif %}
+    </button>
+    <button type="submit" name="action" value="right_turn">右を向く</button>
+  </form>
 </div>

@@ -1,9 +1,11 @@
+from models.data import Object
 from models.data import User, Planet, Tile, NoneTile, Object, Surround
-from services.spatial import SURROUND_BASE, rotate,wrap_coord
+from services.spatial import SURROUND_BASE, rotate, wrap_coord
 from services.errors import DomainDataError
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 def fetch_now(cur):
     cur.execute("SELECT now()")
@@ -41,6 +43,7 @@ def fetch_user_data(cur, user_id, now) -> User | None:
         now=now,
     )
 
+
 def fetch_user_at(cur, planet_id: int, x: int, y: int) -> User | None:
     cur.execute("""
         SELECT id, username, planet_id, x, y, direction, stardust, created_at
@@ -62,6 +65,7 @@ def fetch_user_at(cur, planet_id: int, x: int, y: int) -> User | None:
         created_at=row["created_at"],
         now=None,  # surround表示では不要なら None でOK
     )
+
 
 def fetch_planet_data(cur, planet_id, now) -> Planet:
     cur.execute("""
@@ -114,13 +118,13 @@ def fetch_tile_at(cur, planet_id: int, wtx: int, wty: int) -> Tile:
     cur.execute("""
         SELECT
             o.kind,
-            o.surround_text
-        FROM object_placements op
-        JOIN objects o ON o.id = op.object_id
+            o.content
+        FROM object_tiles ot
+        JOIN objects o ON o.id = ot.object_id
         WHERE
-            op.planet_id = %s
-            AND op.x = %s
-            AND op.y = %s
+            ot.planet_id = %s
+            AND ot.x = %s
+            AND ot.y = %s
         LIMIT 1
     """, (planet_id, wtx, wty))
 
@@ -128,14 +132,12 @@ def fetch_tile_at(cur, planet_id: int, wtx: int, wty: int) -> Tile:
     if obj_row:
         return Tile(
             kind=obj_row["kind"],
-            content=obj_row["surround_text"] or "",
+            content=obj_row["content"] or "",
         )
 
     # ③ 何もない
     return NoneTile()
 
-
-from models.data import Object
 
 def fetch_object_at(cur, planet_id: int, x: int, y: int) -> Object | None:
     """
@@ -156,12 +158,12 @@ def fetch_object_at(cur, planet_id: int, x: int, y: int) -> Object | None:
             o.bad,
             o.created_at,
             o.created_name
-        FROM object_placements op
-        JOIN objects o ON o.id = op.object_id
+        FROM object_tiles ot
+        JOIN objects o ON o.id = ot.object_id
         WHERE
-            op.planet_id = %s
-            AND op.x = %s
-            AND op.y = %s
+            ot.planet_id = %s
+            AND ot.x = %s
+            AND ot.y = %s
         LIMIT 1
     """, (planet_id, x, y))
 
@@ -181,9 +183,10 @@ def fetch_object_at(cur, planet_id: int, x: int, y: int) -> Object | None:
     )
 
     # ② 子オブジェクト（relations / edges）
-    fetch_object_children(cur,obj)
+    fetch_object_children(cur, obj)
 
     return obj
+
 
 def fetch_object_children(cur, parent, visited=None):
     if visited is None:
@@ -192,7 +195,7 @@ def fetch_object_children(cur, parent, visited=None):
         logger.error("Detected circular object relation: %s", parent.id)
         raise DomainDataError("circular object relation")
     visited.add(parent.id)
-    
+
     cur.execute("""
         SELECT
             o.id,
@@ -205,7 +208,7 @@ def fetch_object_children(cur, parent, visited=None):
         FROM object_relations r
         JOIN objects o ON o.id = r.child_id
         WHERE r.parent_id = %s
-        ORDER BY r.order_index ASC
+        ORDER BY r.child_id ASC
     """, (parent.id,))
 
     rows = cur.fetchall()
@@ -259,6 +262,6 @@ def fetch_surround_data(cur, self_data: User, planet_data: Planet) -> Surround:
         s9=tiles[9],
     )
 
+
 def fetch_galaxy_data():
     return
-

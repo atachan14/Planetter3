@@ -46,7 +46,7 @@ class Tile:
 @dataclass(frozen=True)
 class NoneTile(Tile):
     kind: str = "none"
-    content: str = ""
+    content: str = "none"
     
 @dataclass
 class Object(CreatedAtMixin):

@@ -1,10 +1,4 @@
 <div class="flex-column none-root">
-    <form class="flex-row post-box" method="post" action="/">
-        <textarea name="action"
-                  value="content"
-                  class="post-textarea"
-                  rows="3"
-                  placeholder="なんか書いて"></textarea>
-        <button type="submit" name="action" value="post-to-tile">星屑を置く</button>
-    </form>
+  {% set value = "post-to-tile" %}
+  {% include "parts/post_form.jinja" %}
 </div>

@@ -39,14 +39,14 @@ def index_get():
         planet_data = fetch_planet_data(cur, self_data.planet_id,db_now)
 
     # デフォルト
-        surroundData = None
+        surround_data = None
         galaxyData = None
 
         if state == "landing":
             content_template = "landing.jinja"
 
         elif state == "planet":
-            surroundData = fetch_surround_data(cur, self_data, planet_data)
+            surround_data = fetch_surround_data(cur, self_data, planet_data)
             content_template = "planet.jinja"
 
         elif state == "galaxy":
@@ -73,7 +73,7 @@ def index_get():
         self_data=self_data,
         planet_data=planet_data,
 
-        surroundData=surroundData,
+        surround_data=surround_data,
         galaxyData=galaxyData,
     )
 

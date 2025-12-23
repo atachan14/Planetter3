@@ -1,0 +1,7 @@
+<form class="flex-row page-form" method="post" action="/">
+  <input type="text"
+         name="page_content"
+         class="page-text"
+         placeholder="{{ placeholder|default("input pagename") }}" />
+  <button type="submit" name="action" value="{{ value }}">{{ button_text | default("星屑を開く") }}</button>
+</form>

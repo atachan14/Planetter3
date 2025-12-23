@@ -3,6 +3,8 @@ from routes.index import index_bp
 from dotenv import load_dotenv
 import os
 
+import os
+
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")

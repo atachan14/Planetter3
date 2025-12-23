@@ -1,0 +1,7 @@
+<form class="flex-row post-form" method="post" action="/">
+  <textarea rows="{{ rows | default(5) }}"
+            name="post-content"
+            class="post-textarea"
+            placeholder="{{ placeholder | default('なんか書いて') }}"></textarea>
+  <button type="submit" name="action" value="{{ value }}">{{ button_text | default("星屑を置く") }}</button>
+</form>

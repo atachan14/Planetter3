@@ -90,7 +90,6 @@ body {
 
 .main-root main {
     flex: 1;
-    height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -167,7 +166,7 @@ body {
     flex: 1;
     display: grid;
     grid-template-columns: 1fr 4fr 1fr;
-    grid-template-rows: auto 1fr;
+    grid-template-rows: 3em 1fr;
     overflow: hidden;
     position: relative;
 }
@@ -180,4 +179,97 @@ body {
 
 .planet-grid .surround {
     font-size: 0.75rem;
+}
+
+
+.planet-grid .here{
+    width:100%;
+}
+
+.planet-commond {
+    gap: 1em;
+    justify-content: center;
+    margin:1em auto;
+}
+
+.planet-commond>* {
+    width: 6em;
+}
+
+/* object color */
+.planet-grid .surround.none {
+    color: #999
+}
+.planet-grid .surround.user {
+    color: #f00
+}
+.planet-grid .surround.post {
+    color: #ff0
+}
+.post-content{
+    color:#ff0
+}
+.post-info{
+    color:#ffff99
+}
+
+/* here */
+/* none */
+.none-root textarea {
+    resize: none;
+}
+
+/* post-here */
+.here-post{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width:100%;
+    height:100%;
+}
+.here-post .page-form{
+    margin: auto auto 1em;
+}
+.here-post .post-item{
+    flex:1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.here-post .post-content{
+    font-size: 5vw;
+}
+
+/* post-item */
+.post-item {
+    width: 100%;
+
+}
+
+.post-item .post-info {
+    display: flex;
+    font-size: 0.75em;
+}
+
+.post-item .post-info .post-evaluation {
+    display: flex;
+}
+
+.post-item .post-info .post-created {
+    display: flex;
+}
+
+@media (max-width: 767px) {
+    .post-item .post-info {
+        justify-content: space-between;
+    }
+
+    .post-item .post-info .post-evaluation {
+        flex-direction: column;
+    }
+
+    .post-item .post-info .post-created {
+        flex-direction: column;
+    }
 }

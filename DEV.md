@@ -6,11 +6,7 @@
 
 
     - 事業所
-        - userStateをuserData
-        - login処理js版にリファクタ
-        - css
-        - リネーム
-        - ファイル整理
+        - name==actionのとこチャッピに聞く。
 
     - 後回し？
         - css
