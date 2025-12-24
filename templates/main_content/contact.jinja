@@ -1,0 +1,28 @@
+これ、ここの初期化処理って必要？今後もここが増えてくのきもいよね？
+# デフォルト
+surround_data = None
+galaxy_data = None
+contact_user = None
+で、
+return render_template(
+"main.jinja",
+content_template=content_template,
+self_data=self_data,
+planet_data=planet_data,
+surround_data=surround_data,
+galaxy_data=galaxy_data,
+contact_user=contact_user,
+)
+ここも増えてくのきもいし。
+なんかさ、
+datasみたいな辞書作って
+必要があれば各分岐でdatas.add(contact_user_data)みたいに突っ込んで
+渡すときは
+return render_template(
+"main.jinja",
+content_template=content_template,
+self_data=self_data,
+planet_data=planet_data,
+datas=datas
+)
+みたいにするのはどう？ネスト一段深くなるのはちょっとめんどいけど、jinja側ではどうせ{% set s7 = surround_data.s7 %}こういうノリでsetすれば済むし

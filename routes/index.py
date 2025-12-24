@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, session, flash
 from psycopg2.extras import RealDictCursor
-from services.errors import AppError,InvalidStateError
+from services.errors import AppError,InvalidStateError,DomainDataError
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,7 +14,8 @@ from services.data import (
     fetch_galaxy_data,
 )
 
-from services.auth import handle_login, handle_logout
+from services.action.auth import handle_login, handle_logout
+from services.action.move import handle_front_move, handle_turn
 
 
 index_bp = Blueprint("index", __name__)
@@ -39,7 +40,8 @@ def index_get():
 
     # デフォルト
         surround_data = None
-        galaxyData = None
+        galaxy_data = None
+        contact_user = None
 
         if state == "landing":
             content_template = "main_content/landing.jinja"
@@ -49,9 +51,22 @@ def index_get():
             content_template = "main_content/planet.jinja"
 
         elif state == "galaxy":
-            galaxyData = fetch_galaxy_data(cur, self_id)
+            galaxy_data = fetch_galaxy_data(cur, self_id)
             content_template = "main_content/galaxy.jinja"
 
+        elif state == "contact":
+            contact_user_id = session.get("contact_user_id")
+            if not contact_user_id:
+                logger.warning("contact state without contact_user_id")
+                raise InvalidStateError("contact without target")
+
+            contact_user = fetch_user_data(cur, contact_user_id, db_now)
+            if not contact_user:
+                logger.warning(f"contact target not found: {contact_user_id}")
+                raise DomainDataError("contact user not found")
+
+            content_template = "main_content/contact.jinja"
+        
         else:
             # 保険
             logger.warning(f"invalid state: {state}")
@@ -71,7 +86,8 @@ def index_get():
         planet_data=planet_data,
 
         surround_data=surround_data,
-        galaxyData=galaxyData,
+        galaxy_data=galaxy_data,
+        contact_user=contact_user,
     )
 
 
@@ -79,18 +95,32 @@ def index_get():
 def index_post():
     action = request.form.get("action")
 
-    auth_action(action)
-    move_action(action)
-    object_create(action)
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    # その他 action
+    try:
+        auth(cur, action)
+        landing(action)
+        move(cur, action)
+        object_create(cur, action)
+
+        conn.commit()   # ← 成功時のみ
+
+    except AppError as e:
+        conn.rollback() # ← 失敗時
+        return render_template("error.jinja", error_code=e.code)
+
+    finally:
+        cur.close()
+        conn.close()
 
     return redirect("/")
 
 
-def auth_action(action):
+def auth(cur,action):
     if action == "login":
         handle_login(
+            cur,
             request.form.get("username"),
             request.form.get("password"),
             session,
@@ -99,13 +129,13 @@ def auth_action(action):
     if action == "logout":
         handle_logout(session)
 
-def move_action(action):
+def landing(action):
     if action == "enter_planet":
         session["state"] = "planet"
 
-    if action == "front_action":
-        #あとで実装
-        pass
+def move(cur,action,session):
+    if action == "front_move":
+        handle_front_move(cur,session)
     
     if action == "left_turn":
         #あとで実装
@@ -115,7 +145,7 @@ def move_action(action):
         #あとで実装
         pass
 
-def object_create(action):
+def object_create(cur,action):
     if action == "post_to_tile":
         #あとで実装
         pass

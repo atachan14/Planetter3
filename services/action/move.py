@@ -1,37 +1,52 @@
-import random
+from services.data import (
+    fetch_now,
+    fetch_user_data,
+    fetch_planet_data,
+    fetch_user_at,
+)
+from errors import InvalidStateError
+from spatial import rotate,wrap_coord
 
-#helper
-DIRECTION_TO_DELTA = {
-    0: (0, -1),
-    1: (1, 0),
-    2: (0, 1),
-    3: (-1, 0),
-}
-def rotate(direction, turn):
-    return (direction + turn) % 4
 
-#landing
-def land_on_planet(cur, self_id, planet_id):
-    cur.execute(
-        "SELECT width, height FROM planets WHERE id = %s",
-        (planet_id,)
-    )
-    row = cur.fetchone()
-    width = int(row["width"])
-    height = int(row["height"])
+def handle_front_move(cur,session):
+    self_id = session.get("self_id")
+    if not self_id:
+        raise InvalidStateError("front_move without login")
 
-    x = random.randrange(width)
-    y = random.randrange(height)
-    direction = random.randrange(4)
+    now = fetch_now(cur)
+    self_data = fetch_user_data(cur, self_id, now)
+    planet_data = fetch_planet_data(cur, self_data.planet_id, now)
 
+    # ここから前方判定
+    dx, dy = 0, -1
+    rdx, rdy = rotate(dx, dy, self_data.direction)
+
+    tx = self_data.x + rdx
+    ty = self_data.y + rdy
+    wtx, wty = wrap_coord(tx, ty, planet_data)
+
+    target_user = fetch_user_at(cur, planet_data.id, wtx, wty)
+
+    if target_user:
+        handle_contact(session,self_data, target_user)
+    else:
+        handle_walk(cur, self_data, wtx, wty)
+
+def handle_contact(session,target_user):
+    session["state"]="contact"
+    session["contact_user_id"]=target_user.id
+
+
+def handle_walk(cur, self_data, wtx, wty):
     cur.execute(
         """
         UPDATE users
-        SET planet_id = %s,
-            x = %s,
-            y = %s,
-            direction = %s
+        SET x = %s, y = %s
         WHERE id = %s
         """,
-        (planet_id, x, y, direction, self_id)
+        (wtx, wty, self_data.id)
     )
+    
+def handle_turn(turn):
+    pass
+
