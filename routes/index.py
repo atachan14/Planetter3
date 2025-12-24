@@ -1,10 +1,9 @@
 from flask import Blueprint, render_template, request, redirect, session, flash
 from psycopg2.extras import RealDictCursor
-from services.errors import DomainDataError,InvalidStateError
+from services.errors import AppError,InvalidStateError
 import logging
 
 logger = logging.getLogger(__name__)
-
 
 from db import get_db
 from services.data import (
@@ -43,25 +42,23 @@ def index_get():
         galaxyData = None
 
         if state == "landing":
-            content_template = "landing.jinja"
+            content_template = "main_content/landing.jinja"
 
         elif state == "planet":
             surround_data = fetch_surround_data(cur, self_data, planet_data)
-            content_template = "planet.jinja"
+            content_template = "main_content/planet.jinja"
 
         elif state == "galaxy":
             galaxyData = fetch_galaxy_data(cur, self_id)
-            content_template = "galaxy.jinja"
+            content_template = "main_content/galaxy.jinja"
 
         else:
             # 保険
             logger.warning(f"invalid state: {state}")
             raise InvalidStateError(f"invalid state: {state}")
 
-    except DomainDataError:
-        return render_template("error.jinja")
-    except InvalidStateError:
-        return render_template("error.jinja")
+    except AppError as e:
+        return render_template("error.jinja", error_code=e.code)
 
     finally:
         cur.close()
@@ -82,6 +79,16 @@ def index_get():
 def index_post():
     action = request.form.get("action")
 
+    auth_action(action)
+    move_action(action)
+    object_create(action)
+
+    # その他 action
+
+    return redirect("/")
+
+
+def auth_action(action):
     if action == "login":
         handle_login(
             request.form.get("username"),
@@ -92,11 +99,46 @@ def index_post():
     if action == "logout":
         handle_logout(session)
 
+def move_action(action):
     if action == "enter_planet":
         session["state"] = "planet"
 
-    # その他 action
+    if action == "front_action":
+        #あとで実装
+        pass
+    
+    if action == "left_turn":
+        #あとで実装
+        pass
+    
+    if action == "right_turn":
+        #あとで実装
+        pass
 
-    return redirect("/")
+def object_create(action):
+    if action == "post_to_tile":
+        #あとで実装
+        pass
+    
+    if action == "post_to_page":
+        #あとで実装
+        pass
+    if action == "page_to_tile":
+        #あとで実装
+        pass
 
+    if action == "page_to_book":
+        #あとで実装
+        pass
 
+    if action == "book_to_tile":
+        #あとで実装
+        pass
+    
+    if action == "book_to_shelf":
+        #あとで実装
+        pass
+    
+    if action == "shelf_to_tile":
+        #あとで実装
+        pass

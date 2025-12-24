@@ -23,7 +23,7 @@
     <button type="submit" name="action" value="left_turn">左を向く</button>
     <button type="submit" name="action" value="next_pos">
       {% if s8.kind == 'user' %}
-        contact
+        {% s8.content %}
       {% else %}
         歩く
       {% endif %}

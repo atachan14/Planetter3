@@ -2,18 +2,18 @@
 {% block body %}
   <div class="main-root">
     <header>
-      {% include "head-bar.jinja" %}
+      {% include "main_outer/head-bar.jinja" %}
     </header>
     <div class="layout-cutter">
       <main>
         {% include content_template %}
       </main>
-      <aside style="display:none;">
-        {% include "aside-bar.jinja" %}
-      </aside>
+      {% comment %} <aside>
+        {% include "main_outer/aside-bar.jinja" %}
+      </aside> {% endcomment %}
     </div>
     <footer>
-      {% include "foot-bar.jinja" %}
+      {% include "main_outer/foot-bar.jinja" %}
     </footer>
   </div>
 {% endblock body %}
