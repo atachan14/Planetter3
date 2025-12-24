@@ -1,9 +1,10 @@
-{% set s7 = surround_data.s7 %}
-{% set s8 = surround_data.s8 %}
-{% set s9 = surround_data.s9 %}
-{% set s4 = surround_data.s4 %}
-{% set s5 = surround_data.s5 %}
-{% set s6 = surround_data.s6 %}
+{% set surround = datas.surround %}
+{% set s7 = surround.s7 %}
+{% set s8 = surround.s8 %}
+{% set s9 = surround.s9 %}
+{% set s4 = surround.s4 %}
+{% set s5 = surround.s5 %}
+{% set s6 = surround.s6 %}
 <div class="planet-layout">
   <div class="planet-grid">
     <div class="surround {{ s7.kind or 'none' }}">{{ s7.content }}</div>
@@ -20,14 +21,14 @@
     <div class="surround {{ s6.kind or 'none' }}">{{ s6.content }}</div>
   </div>
   <form class="planet-commond flex-row" method="post" action="/">
-    <button type="submit" name="action" value="left_turn">左を向く</button>
-    <button type="submit" name="action" value="next_pos">
+    <button type="submit" name="action" value="turn_left">左を向く</button>
+    <button type="submit" name="action" value="to_front">
       {% if s8.kind == 'user' %}
-        {% s8.content %}
+        {{ s8.content }}
       {% else %}
         歩く
       {% endif %}
     </button>
-    <button type="submit" name="action" value="right_turn">右を向く</button>
+    <button type="submit" name="action" value="turn_right">右を向く</button>
   </form>
 </div>

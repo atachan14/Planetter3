@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, session, flash
 from psycopg2.extras import RealDictCursor
-from services.errors import AppError,InvalidStateError,DomainDataError
+from errors import AppError,InvalidStateError,DomainDataError,OperationAborted
 import logging
 
 logger = logging.getLogger(__name__)
@@ -9,13 +9,14 @@ from db import get_db
 from services.data import (
     fetch_now,
     fetch_user_data,
+    fetch_user_count,
     fetch_planet_data,
     fetch_surround_data,
     fetch_galaxy_data,
 )
 
 from services.action.auth import handle_login, handle_logout
-from services.action.move import handle_front_move, handle_turn
+from services.action.move import handle_to_front, handle_turn
 
 
 index_bp = Blueprint("index", __name__)
@@ -39,19 +40,17 @@ def index_get():
         planet_data = fetch_planet_data(cur, self_data.planet_id,db_now)
 
     # デフォルト
-        surround_data = None
-        galaxy_data = None
-        contact_user = None
+        datas = {}
 
         if state == "landing":
             content_template = "main_content/landing.jinja"
 
         elif state == "planet":
-            surround_data = fetch_surround_data(cur, self_data, planet_data)
+            datas["surround"] = fetch_surround_data(cur, self_data, planet_data)
             content_template = "main_content/planet.jinja"
 
         elif state == "galaxy":
-            galaxy_data = fetch_galaxy_data(cur, self_id)
+            datas["galaxy"] = fetch_galaxy_data(cur, self_id)
             content_template = "main_content/galaxy.jinja"
 
         elif state == "contact":
@@ -60,10 +59,8 @@ def index_get():
                 logger.warning("contact state without contact_user_id")
                 raise InvalidStateError("contact without target")
 
-            contact_user = fetch_user_data(cur, contact_user_id, db_now)
-            if not contact_user:
-                logger.warning(f"contact target not found: {contact_user_id}")
-                raise DomainDataError("contact user not found")
+            datas["target"] = fetch_user_data(cur, contact_user_id, db_now)
+            datas["count"] = fetch_user_count(cur,contact_user_id)
 
             content_template = "main_content/contact.jinja"
         
@@ -85,14 +82,14 @@ def index_get():
         self_data=self_data,
         planet_data=planet_data,
 
-        surround_data=surround_data,
-        galaxy_data=galaxy_data,
-        contact_user=contact_user,
+        datas=datas,
     )
 
 
 @index_bp.route("/", methods=["POST"])
 def index_post():
+
+    
     action = request.form.get("action")
 
     conn = get_db()
@@ -100,12 +97,21 @@ def index_post():
 
     try:
         auth(cur, action)
+        
+        # ここから先は「ログイン必須アクション」
+        if "self_id" not in session:
+            raise OperationAborted()
+        
         landing(action)
         move(cur, action)
         object_create(cur, action)
 
         conn.commit()   # ← 成功時のみ
-
+    
+    except OperationAborted:
+        conn.rollback()
+        return redirect("/")
+    
     except AppError as e:
         conn.rollback() # ← 失敗時
         return render_template("error.jinja", error_code=e.code)
@@ -133,18 +139,16 @@ def landing(action):
     if action == "enter_planet":
         session["state"] = "planet"
 
-def move(cur,action,session):
-    if action == "front_move":
-        handle_front_move(cur,session)
+def move(cur,action):
+    if action == "to_front":
+        handle_to_front(cur,session)
     
-    if action == "left_turn":
-        #あとで実装
-        pass
+    if action == "turn_left":
+        handle_turn(cur,session,-1)
     
-    if action == "right_turn":
-        #あとで実装
-        pass
-
+    if action == "turn_right":
+        handle_turn(cur,session,1)
+        
 def object_create(cur,action):
     if action == "post_to_tile":
         #あとで実装

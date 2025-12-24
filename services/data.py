@@ -1,7 +1,7 @@
 from models.data import Object
-from models.data import User, Planet, Tile, NoneTile, Object, Surround
-from services.spatial import SURROUND_BASE, rotate, wrap_coord
-from services.errors import DomainDataError
+from models.data import User, Planet, UserCount,Tile, NoneTile, Object, Surround
+from services.spatial import SURROUND_BASE, rotate_delta, wrap_coord
+from errors import DomainDataError
 import logging
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ def fetch_user_data(cur, user_id, now) -> User | None:
 
     row = cur.fetchone()
     if row is None:
-        return None
+        raise DomainDataError(f"user not found: {user_id}")
 
     return User(
         id=row["id"],
@@ -65,6 +65,34 @@ def fetch_user_at(cur, planet_id: int, x: int, y: int) -> User | None:
         created_at=row["created_at"],
         now=None,  # surround表示では不要なら None でOK
     )
+def fetch_user_count(cur, user_id: int) -> UserCount:
+    cur.execute(
+        """
+        SELECT
+            user_id,
+            walk,
+            turn,
+            kill,
+            post,
+            page,
+            book,
+            shelf,
+            planet,
+            special,
+            rocket,
+            planet_draw,
+            user_draw
+        FROM user_counts
+        WHERE user_id = %s
+        """,
+        (user_id,),
+    )
+
+    row = cur.fetchone()
+    if row is None:
+        raise DomainDataError(f"user_counts not found for user_id={user_id}")
+
+    return UserCount(**row)
 
 
 def fetch_planet_data(cur, planet_id, now) -> Planet:
@@ -242,7 +270,7 @@ def fetch_surround_data(cur, self_data: User, planet_data: Planet) -> Surround:
 
     for pos, (dx, dy) in SURROUND_BASE.items():
         # 向き補正
-        rdx, rdy = rotate(dx, dy, self_data.direction)
+        rdx, rdy = rotate_delta(dx, dy, self_data.direction)
 
         # 生座標
         tx = self_data.x + rdx

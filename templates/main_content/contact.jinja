@@ -1,28 +1,26 @@
-これ、ここの初期化処理って必要？今後もここが増えてくのきもいよね？
-# デフォルト
-surround_data = None
-galaxy_data = None
-contact_user = None
-で、
-return render_template(
-"main.jinja",
-content_template=content_template,
-self_data=self_data,
-planet_data=planet_data,
-surround_data=surround_data,
-galaxy_data=galaxy_data,
-contact_user=contact_user,
-)
-ここも増えてくのきもいし。
-なんかさ、
-datasみたいな辞書作って
-必要があれば各分岐でdatas.add(contact_user_data)みたいに突っ込んで
-渡すときは
-return render_template(
-"main.jinja",
-content_template=content_template,
-self_data=self_data,
-planet_data=planet_data,
-datas=datas
-)
-みたいにするのはどう？ネスト一段深くなるのはちょっとめんどいけど、jinja側ではどうせ{% set s7 = surround_data.s7 %}こういうノリでsetすれば済むし
+{% set target = datas.target %}
+{% set count = datas.count %}
+<div class="contact_root">
+    <div class="contact-head">
+        <div class="target-name">{{ target.username }}</div>
+        <div class="target-survive">{{ target.survive_days }}日生存</div>
+    </div>
+    <div class="contact-grid">
+        <div>walk:{{ count.walk }}</div>
+        <div>turn:{{ count.turn }}</div>
+        <div>rocket:{{ count.rocket }}</div>
+        <div>kill:{{ count.kill }}</div>
+        <div>post:{{ count.post }}</div>
+        <div>page:{{ count.page }}</div>
+        <div>book:{{ count.book }}</div>
+        <div>shelf:{{ count.shelf }}</div>
+        <div>planet:{{ count.planet }}</div>
+        <div>special:{{ count.special }}</div>
+        <div>p.draw:{{ count.planet_draw }}</div>
+        <div>u.draw:{{ count.user_draw }}</div>
+    </div>
+    <form class="contact-form" method="post" action="/">
+        <button type="submit" name="action" value="forgive">見逃す</button>
+        <button type="submit" name="action" value="kill">殺す</button>
+    </form>
+</div>

@@ -193,7 +193,22 @@ body {
 }
 
 .planet-commond>* {
-    width: 6em;
+    width: 7em;
+    height: 3em;
+    line-height: 1em;
+}
+
+/* contact */
+.contact_root{
+    width:100%;
+}
+.contact_root .contact-head{
+    display: flex;
+}
+.contact_root .contact-grid{
+    width:100;
+    display: grid;
+    grid-template-columns: 2fr 2fr;
 }
 
 /* object color */

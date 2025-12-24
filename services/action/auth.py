@@ -15,6 +15,7 @@ def handle_login(cur,username: str, password: str, session):
         "SELECT id, password_hash FROM users WHERE username = %s",
         (username,)
     )
+    print("LOGIN START", username)
     user = cur.fetchone()
 
     if user is None:
@@ -32,6 +33,7 @@ def handle_login(cur,username: str, password: str, session):
         self_id = cur.fetchone()["id"]
 
         land_on_planet(cur, self_id, BEGINNERS_PLANET_ID)
+        print("NEW USER", username)
 
 
     else:
@@ -44,6 +46,7 @@ def handle_login(cur,username: str, password: str, session):
 
     session["self_id"] = self_id
     session["state"] = "landing"
+    print("LOGIN SUCSSES", username)
 
 
 def handle_logout(session):

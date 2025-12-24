@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
+from errors import MissingNowError
 
 @dataclass
 class CreatedAtMixin:
@@ -13,12 +14,15 @@ class CreatedAtMixin:
 
 @dataclass
 class NowMixin(CreatedAtMixin):
-    now: datetime
+    now: datetime | None
 
     @property
     def survive_days(self) -> int:
+        if self.now is None:
+            raise MissingNowError(
+                "survive_days requires now, but now is None"
+            )
         return (self.now.date() - self.created_at.date()).days
-
     
 @dataclass
 class User(NowMixin):
@@ -29,6 +33,24 @@ class User(NowMixin):
     y: int
     direction: int
     stardust: int
+
+@dataclass
+class UserCount:
+    user_id: int
+    walk: int
+    turn: int
+    rocket: int
+    kill: int
+    post: int
+    page: int
+    book: int
+    shelf: int
+    planet: int
+    special: int
+    planet_draw: int
+    user_draw: int
+
+
 
 @dataclass
 class Planet(NowMixin):

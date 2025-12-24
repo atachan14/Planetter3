@@ -1,3 +1,4 @@
+
 from services.data import (
     fetch_now,
     fetch_user_data,
@@ -5,13 +6,13 @@ from services.data import (
     fetch_user_at,
 )
 from errors import InvalidStateError
-from spatial import rotate,wrap_coord
+from services.spatial import rotate_delta,wrap_coord
 
 
-def handle_front_move(cur,session):
+def handle_to_front(cur,session):
     self_id = session.get("self_id")
     if not self_id:
-        raise InvalidStateError("front_move without login")
+        raise InvalidStateError("to_front without login")
 
     now = fetch_now(cur)
     self_data = fetch_user_data(cur, self_id, now)
@@ -19,7 +20,7 @@ def handle_front_move(cur,session):
 
     # ここから前方判定
     dx, dy = 0, -1
-    rdx, rdy = rotate(dx, dy, self_data.direction)
+    rdx, rdy = rotate_delta(dx, dy, self_data.direction)
 
     tx = self_data.x + rdx
     ty = self_data.y + rdy
@@ -28,7 +29,7 @@ def handle_front_move(cur,session):
     target_user = fetch_user_at(cur, planet_data.id, wtx, wty)
 
     if target_user:
-        handle_contact(session,self_data, target_user)
+        handle_contact(session, target_user)
     else:
         handle_walk(cur, self_data, wtx, wty)
 
@@ -46,7 +47,33 @@ def handle_walk(cur, self_data, wtx, wty):
         """,
         (wtx, wty, self_data.id)
     )
+    cur.execute(
+        """
+        UPDATE user_counts
+        SET walk = walk + 1
+        WHERE user_id = %s
+        """,
+        (self_data.id,),
+    )
     
-def handle_turn(turn):
-    pass
+def handle_turn(cur, session, turn: int):
+    self_id = session.get("self_id")
+    if not self_id:
+        raise InvalidStateError("turn without login")
 
+    cur.execute(
+        """
+        UPDATE users
+        SET direction = (direction + %s + 4) %% 4
+        WHERE id = %s
+        """,
+        (turn, self_id)
+    )
+    cur.execute(
+        """
+        UPDATE user_counts
+        SET turn = turn + 1
+        WHERE user_id = %s
+        """,
+        (self_id,),
+    )
