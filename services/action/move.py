@@ -56,8 +56,7 @@ def handle_walk(cur, self_data, wtx, wty):
         (self_data.id,),
     )
     
-def handle_turn(cur, session, turn: int):
-    self_id = session.get("self_id")
+def handle_turn(cur, self_id, turn: int):
     if not self_id:
         raise InvalidStateError("turn without login")
 
@@ -76,4 +75,15 @@ def handle_turn(cur, session, turn: int):
         WHERE user_id = %s
         """,
         (self_id,),
+    )
+
+def handle_kill(cur, session,target_id):
+    # sessionにresult(stardustを入れる)
+    # stardustを加算する
+    cur.execute(
+        """
+        DELETE FROM users
+        WHERE id = %s
+        """,
+        (target_id,)
     )

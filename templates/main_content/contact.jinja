@@ -1,26 +1,91 @@
 {% set target = datas.target %}
 {% set count = datas.count %}
-<div class="contact_root">
+<div class="contact-root">
     <div class="contact-head">
-        <div class="target-name">{{ target.username }}</div>
-        <div class="target-survive">{{ target.survive_days }}日生存</div>
+        <span class="user">{{ target.name if target else "■■■" }}</span><span class="user-info">（{{ target.survive_days if target else "■■■" }}日目）</span>
     </div>
-    <div class="contact-grid">
-        <div>walk:{{ count.walk }}</div>
-        <div>turn:{{ count.turn }}</div>
-        <div>rocket:{{ count.rocket }}</div>
-        <div>kill:{{ count.kill }}</div>
-        <div>post:{{ count.post }}</div>
-        <div>page:{{ count.page }}</div>
-        <div>book:{{ count.book }}</div>
-        <div>shelf:{{ count.shelf }}</div>
-        <div>planet:{{ count.planet }}</div>
-        <div>special:{{ count.special }}</div>
-        <div>p.draw:{{ count.planet_draw }}</div>
-        <div>u.draw:{{ count.user_draw }}</div>
+    <div class="contact-grid user-info">
+        <dl>
+            <dt>walk</dt>
+            <dd>
+                : {{ count.walk if count else "■■■" }}
+            </dd>
+        </dl>
+        <dl>
+            <dt>turn</dt>
+            <dd>
+                : {{ count.turn if count else "■■■" }}
+            </dd>
+        </dl>
+        <dl>
+            <dt>rocket</dt>
+            <dd>
+                : {{ count.rocket if count else "■■■" }}
+            </dd>
+        </dl>
+        <dl>
+            <dt>kill</dt>
+            <dd>
+                : {{ count.kill if count else "■■■" }}
+            </dd>
+        </dl>
+        <dl>
+            <dt>post</dt>
+            <dd>
+                : {{ count.post if count else "■■■" }}
+            </dd>
+        </dl>
+        <dl>
+            <dt>page</dt>
+            <dd>
+                : {{ count.page if count else "■■■" }}
+            </dd>
+        </dl>
+        <dl>
+            <dt>book</dt>
+            <dd>
+                : {{ count.book if count else "■■■" }}
+            </dd>
+        </dl>
+        <dl>
+            <dt>shelf</dt>
+            <dd>
+                : {{ count.shelf if count else "■■■" }}
+            </dd>
+        </dl>
+        <dl>
+            <dt>planet</dt>
+            <dd>
+                : {{ count.planet if count else "■■■" }}
+            </dd>
+        </dl>
+        <dl>
+            <dt>special</dt>
+            <dd>
+                : {{ count.special if count else "■■■" }}
+            </dd>
+        </dl>
+        <dl>
+            <dt>p.draw</dt>
+            <dd>
+                : {{ count.planet_draw if count else "■■■" }}
+            </dd>
+        </dl>
+        <dl>
+            <dt>u.draw</dt>
+            <dd>
+                : {{ count.user_draw if count else "■■■" }}
+            </dd>
+        </dl>
     </div>
-    <form class="contact-form" method="post" action="/">
-        <button type="submit" name="action" value="forgive">見逃す</button>
-        <button type="submit" name="action" value="kill">殺す</button>
-    </form>
+    {% if datas.state == "contact" %}
+        <form class="contact-form" method="post" action="/">
+            <button type="submit" name="action" value="enter_planet">見逃す</button>
+            <button type="submit" name="action" value="kill">殺す</button>
+        </form>
+    {% elif datas.state == "killed" %}
+        <form class="contact-form" method="post" action="/">
+            <button type="submit" name="action" value="enter_planet">{{ datas.result }}獲得した！</button>
+        </form>
+    {% endif %}
 </div>

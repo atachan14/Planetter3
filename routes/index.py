@@ -59,7 +59,7 @@ def index_get():
             datas["galaxy"] = fetch_galaxy_data(cur, self_id)
             content_template = "main_content/galaxy.jinja"
 
-        elif state == "contact":
+        elif state in ("contact", "killed"):
             contact_target_id = session.get("contact_target_id")
             if not contact_target_id:
                 logger.warning("contact state without contact_target_id")
@@ -69,6 +69,7 @@ def index_get():
             datas["count"] = fetch_user_count(cur,contact_target_id)
 
             content_template = "main_content/contact.jinja"
+        
         
         else:
             # 保険
@@ -89,6 +90,7 @@ def index_get():
         planet_data=planet_data,
 
         datas=datas,
+        state=state,
         dialog=dialog,
     )
 
@@ -98,6 +100,7 @@ def index_post():
 
     
     action = request.form.get("action")
+    print(action)
 
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -110,8 +113,9 @@ def index_post():
         if self_id is None:
             raise OperationAborted()
         
+        dialog(action)        
         landing(action)
-        move(cur, action)
+        move(cur, action,self_id)
         contact(cur,action)
         object_create(cur, action,self_id)
 
@@ -144,27 +148,28 @@ def auth(cur,action):
     if action == "logout":
         handle_logout(session)
 
+def dialog(action):
+    if action == "redirect":
+        raise OperationAborted()
+
 def landing(action):
     if action == "enter_planet":
         session["state"] = "planet"
 
-def move(cur,action):
+def move(cur,action,self_id):
     if action == "to_front":
         handle_to_front(cur,session)
     
     if action == "turn_left":
-        handle_turn(cur,session,-1)
+        handle_turn(cur,self_id,-1)
     
     if action == "turn_right":
-        handle_turn(cur,session,1)
+        handle_turn(cur,self_id,1)
 
 def contact(cur,action):
-    if action =="forgive":
-        session["state"]="planet"
-
-    elif action =="kill":
+    if action =="kill":
         session["dialog"] = {
-        "text": "殺されたアカウントは生き返りません。よろしいですか？",
+        "text": "殺されたアカウントは生き返りません。本当に殺しますか？",
         "options": [
             {"label": "やめる", "action": "redirect"},
             {"label": "殺す", "action": "killed"},
@@ -172,11 +177,13 @@ def contact(cur,action):
         }
         
     elif action =="killed":
-        pass
+        session["state"]="killed"
+        handle_kill(cur,session["contact_target_id"])
 
         
 def object_create(cur,action,self_id):
     if action == "post_to_tile":
+        print("post_to_tile",request.form.get("post_content"))
         create_to_new_tile(
             cur,
             user_id=self_id,
@@ -184,6 +191,7 @@ def object_create(cur,action,self_id):
             content=request.form.get("post_content"),
             )    
     elif  action == "post_to_page":
+
         create_to_parent(
             cur,
             user_id=self_id,

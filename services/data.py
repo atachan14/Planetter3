@@ -29,7 +29,7 @@ def fetch_user_data(cur, user_id, now) -> User | None:
 
     row = cur.fetchone()
     if row is None:
-        raise DomainDataError(f"user not found: {user_id}")
+        return None
 
     return User(
         id=row["id"],
@@ -65,7 +65,7 @@ def fetch_user_at(cur, planet_id: int, x: int, y: int) -> User | None:
         created_at=row["created_at"],
         now=None,  # surround表示では不要なら None でOK
     )
-def fetch_user_count(cur, user_id: int) -> UserCount:
+def fetch_user_count(cur, user_id: int) -> UserCount | None:
     cur.execute(
         """
         SELECT
@@ -90,7 +90,7 @@ def fetch_user_count(cur, user_id: int) -> UserCount:
 
     row = cur.fetchone()
     if row is None:
-        raise DomainDataError(f"user_counts not found for user_id={user_id}")
+        return None
 
     return UserCount(**row)
 

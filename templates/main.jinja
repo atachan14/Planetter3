@@ -1,24 +1,24 @@
 {% extends "base.jinja" %}
 {% block body %}
-  {% if dialog %}
-    {% include "dialog.jinja" %}
-  {% endif %}
   <div class="main-root">
     <header>
-      {% include "main_outer/head-bar.jinja" %}
+      {% include "main_parts/head-bar.jinja" %}
     </header>
     <div class="layout-cutter">
+      {% if dialog %}
+        {% include "main_parts/dialog.jinja" %}
+      {% endif %}
       <main>
         {% include content_template %}
       </main>
       {#
       <aside>
-        {% include "main_outer/aside-bar.jinja" %}
+        {% include "main_parts/aside-bar.jinja" %}
       </aside>
       #}
     </div>
     <footer>
-      {% include "main_outer/foot-bar.jinja" %}
+      {% include "main_parts/foot-bar.jinja" %}
     </footer>
   </div>
 {% endblock body %}
