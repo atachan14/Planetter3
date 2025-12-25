@@ -1,0 +1,10 @@
+<div class="dialog-backdrop">
+    <div class="dialog-box">
+        <p>{{ dialog.text }}</p>
+        <form method="post" action="/">
+            {% for o in dialog.options %}
+                <button type="submit" name="action" value="{{ o.action }}">{{ o.label }}</button>
+            {% endfor %}
+        </form>
+    </div>
+</div>

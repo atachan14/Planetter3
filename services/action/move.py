@@ -35,7 +35,7 @@ def handle_to_front(cur,session):
 
 def handle_contact(session,target_user):
     session["state"]="contact"
-    session["contact_user_id"]=target_user.id
+    session["contact_target_id"]=target_user.id
 
 
 def handle_walk(cur, self_data, wtx, wty):

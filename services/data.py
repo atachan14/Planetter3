@@ -169,7 +169,6 @@ def fetch_tile_at(cur, planet_id: int, wtx: int, wty: int) -> Tile:
 
 def fetch_object_at(cur, planet_id: int, x: int, y: int) -> Object | None:
     """
-    here（s5）専用。
     行動対象となる Object を取得する。
     - x, y は wrap 済み想定
     - user は扱わない

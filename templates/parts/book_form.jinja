@@ -1,0 +1,7 @@
+<form class="book-form" method="post" action="/">
+    <input type="text"
+           name="book_content"
+           class="book-text"
+           placeholder="{{ placeholder|default("input bookname") }}" />
+    <button type="submit" name="action" value="{{ value }}">{{ button_text | default("星屑を束ねる") }}</button>
+</form>

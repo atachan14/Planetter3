@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, session, flash
 from psycopg2.extras import RealDictCursor
-from errors import AppError,InvalidStateError,DomainDataError,OperationAborted
+from errors import AppError,InvalidStateError,OperationAborted
 import logging
 
 logger = logging.getLogger(__name__)
@@ -17,6 +17,11 @@ from services.data import (
 
 from services.action.auth import handle_login, handle_logout
 from services.action.move import handle_to_front, handle_turn
+from services.action.object_create import (
+    create_to_new_tile,
+    create_to_parent,
+    create_to_tile_with_children,
+)
 
 
 index_bp = Blueprint("index", __name__)
@@ -41,6 +46,7 @@ def index_get():
 
     # デフォルト
         datas = {}
+        dialog = session.pop("dialog", None)
 
         if state == "landing":
             content_template = "main_content/landing.jinja"
@@ -54,13 +60,13 @@ def index_get():
             content_template = "main_content/galaxy.jinja"
 
         elif state == "contact":
-            contact_user_id = session.get("contact_user_id")
-            if not contact_user_id:
-                logger.warning("contact state without contact_user_id")
+            contact_target_id = session.get("contact_target_id")
+            if not contact_target_id:
+                logger.warning("contact state without contact_target_id")
                 raise InvalidStateError("contact without target")
 
-            datas["target"] = fetch_user_data(cur, contact_user_id, db_now)
-            datas["count"] = fetch_user_count(cur,contact_user_id)
+            datas["target"] = fetch_user_data(cur, contact_target_id, db_now)
+            datas["count"] = fetch_user_count(cur,contact_target_id)
 
             content_template = "main_content/contact.jinja"
         
@@ -83,6 +89,7 @@ def index_get():
         planet_data=planet_data,
 
         datas=datas,
+        dialog=dialog,
     )
 
 
@@ -99,12 +106,14 @@ def index_post():
         auth(cur, action)
         
         # ここから先は「ログイン必須アクション」
-        if "self_id" not in session:
+        self_id = session.get("self_id")
+        if self_id is None:
             raise OperationAborted()
         
         landing(action)
         move(cur, action)
-        object_create(cur, action)
+        contact(cur,action)
+        object_create(cur, action,self_id)
 
         conn.commit()   # ← 成功時のみ
     
@@ -148,31 +157,74 @@ def move(cur,action):
     
     if action == "turn_right":
         handle_turn(cur,session,1)
+
+def contact(cur,action):
+    if action =="forgive":
+        session["state"]="planet"
+
+    elif action =="kill":
+        session["dialog"] = {
+        "text": "殺されたアカウントは生き返りません。よろしいですか？",
+        "options": [
+            {"label": "やめる", "action": "redirect"},
+            {"label": "殺す", "action": "killed"},
+            ]
+        }
         
-def object_create(cur,action):
+    elif action =="killed":
+        pass
+
+        
+def object_create(cur,action,self_id):
     if action == "post_to_tile":
-        #あとで実装
-        pass
-    
-    if action == "post_to_page":
-        #あとで実装
-        pass
-    if action == "page_to_tile":
-        #あとで実装
-        pass
-
-    if action == "page_to_book":
-        #あとで実装
-        pass
-
-    if action == "book_to_tile":
-        #あとで実装
-        pass
-    
-    if action == "book_to_shelf":
-        #あとで実装
-        pass
-    
-    if action == "shelf_to_tile":
-        #あとで実装
-        pass
+        create_to_new_tile(
+            cur,
+            user_id=self_id,
+            kind="post",
+            content=request.form.get("post_content"),
+            )    
+    elif  action == "post_to_page":
+        create_to_parent(
+            cur,
+            user_id=self_id,
+            kind="post",
+            content=request.form.get("post_content"),
+            parent_id = int(request.form.get("parent_id"))
+            )        
+    elif  action == "page_to_tile":
+        create_to_tile_with_children(
+            cur,
+            user_id=self_id,
+            kind="page",
+            content=request.form.get("page_content"),
+            )
+    elif  action == "page_to_book":
+        create_to_parent(
+            cur,
+            user_id=self_id,
+            kind="page",
+            content=request.form.get("page_content"),
+            parent_id = int(request.form.get("parent_id"))
+            )
+    elif  action == "book_to_tile":
+        create_to_tile_with_children(
+            cur,
+            user_id=self_id,
+            kind="book",
+            content=request.form.get("book_content"),
+            )
+    elif  action == "book_to_shelf":
+        create_to_tile_with_children(
+            cur,
+            user_id=self_id,
+            kind="book",
+            content=request.form.get("book_content"),
+            parent_id = int(request.form.get("parent_id"))
+            )
+    elif  action == "shelf_to_tile":
+        create_to_tile_with_children(
+            cur,
+            user_id=self_id,
+            kind="shelf",
+            content=request.form.get("shelf_content"),
+            )
