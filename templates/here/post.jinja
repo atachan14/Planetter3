@@ -1,5 +1,6 @@
+{% from "parts/object_items.jinja" import post_item %}
+{% from "parts/create_forms.jinja" import page_form %}
 <div class="here-post">
-  {% include "parts/post_item.jinja" %}
-  {% set value = "post-to-tile" %}
-  {% include "parts/page_form.jinja" %}
+  {{ post_item(s5) }}
+  {{ page_form("page_to_tile") }}
 </div>

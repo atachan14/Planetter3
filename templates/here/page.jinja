@@ -1,5 +1,6 @@
+{% from "parts/object_items.jinja" import page_item %}
+{% from "parts/create_forms.jinja" import book_form %}
 <div class="here-page">
-    {% include "parts/page_item.jinja" with node=s5 % %}
-    {% set value = "book-to-tile" %}
-    {% include "parts/book_form.jinja" %}
+    {{ page_item(s5) }}
+    {{ book_form("book_to_tile") }}
 </div>

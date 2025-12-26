@@ -1,0 +1,39 @@
+{% from "parts/create_forms.jinja" import post_form, page_form, book_form, shelf_form %}
+{% macro item_info(node) %}
+    <div class="item-info">
+        <div class="item-evaluation">
+            <div>fav:{{ node.good }}</div>
+            <div>bad:{{ node.bad }}</div>
+        </div>
+        <div class="item-created">
+            <div>{{ node.created_name }}</div>
+            <div>{{ node.f_created_at }}</div>
+        </div>
+    </div>
+{% endmacro %}
+{% macro post_item(node) %}
+    <div class="post-item">
+        <div class="post-content">{{ node.content }}</div>
+        {{ item_info(node) }}
+    </div>
+{% endmacro %}
+{% macro page_item(node) %}
+    <div class="page-item">
+        <div class="page-content">{{ node.content }}</div>
+        {{ item_info(node) }}
+        <div class="page-children">
+            {% for child in node.children %}{{ post_item(child) }}{% endfor %}
+        </div>
+        {{ post_form("post_to_page",parent_id=node.id) }}
+    </div>
+{% endmacro %}
+{% macro book_item(node) %}
+    <div class="book-item">
+        <div class="page-item book-cover">
+            <div class="book-content">{{ node.content }}</div>
+            {{ item_info(node) }}
+        </div>
+        {% for child in node.children %}{{ page_item(child) }}{% endfor %}
+        {{ page_form("page_to_book") }}
+    </div>
+{% endmacro %}

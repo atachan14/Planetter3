@@ -1,0 +1,6 @@
+{% from "parts/object_items.jinja" import book_item %}
+{% from "parts/create_forms.jinja" import shelf_form %}
+<div class="here-book">
+    {% include "parts/book_item.jinja" with node=s5 % %}
+    {% include "parts/shelf.jinja" with value = "shelf_to_tile" %}
+</div>

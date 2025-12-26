@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from errors import MissingNowError
+from utils.formatters import format_stardust
 
 @dataclass
 class CreatedAtMixin:
@@ -33,6 +34,10 @@ class User(NowMixin):
     y: int
     direction: int
     stardust: int
+
+    @property
+    def f_stardust(self) -> str:
+        return format_stardust(self.stardust)
 
 @dataclass
 class UserCount:

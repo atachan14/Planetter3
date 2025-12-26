@@ -1,9 +1,9 @@
-from services.data import fetch_user_data
+from services.data import fetch_latest_user_data
 from errors import DomainDataError
 
 
 def create_to_new_tile(cur,*,user_id,kind,content):
-    user_data=fetch_user_data(cur,user_id,None)
+    user_data=fetch_latest_user_data(cur,user_id,None)
 
     object_id = create_object(
         cur,
@@ -21,7 +21,7 @@ def create_to_new_tile(cur,*,user_id,kind,content):
     
 def create_to_parent(cur,*,user_id,kind: str,content: str,parent_id: int):
 
-    user_data=fetch_user_data(cur,user_id,None)
+    user_data=fetch_latest_user_data(cur,user_id,None)
 
     object_id = create_object(
         cur,
@@ -37,7 +37,7 @@ def create_to_parent(cur,*,user_id,kind: str,content: str,parent_id: int):
 
 def create_to_tile_with_children(cur,*,user_id,kind,content):
 
-    user = fetch_user_data(cur, user_id,None)
+    user = fetch_latest_user_data(cur, user_id,None)
 
     object_id = create_object(
         cur,

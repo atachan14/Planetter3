@@ -1,0 +1,62 @@
+{# =====================
+   基本フォーム（親）
+   ===================== #}
+{% macro template_form(
+    action,
+    input_type="textarea",
+    rows=None,
+    placeholder=None,
+    button_text=None,
+    field_name="post_content",
+    parent_id =None
+    ) %}
+    <form class="create-form" method="post" action="/">
+        {% if parent_id is not none %}<input type="hidden" name="parent_id" value="{{ parent_id }}">{% endif %}
+        {% if input_type == "textarea" %}
+            <textarea name="{{ field_name }}"
+                      class="create-textarea"
+                      rows="{{ rows | default(5) }}"
+                      placeholder="{{ placeholder | default('なんか書いて') }}"></textarea>
+        {% elif input_type == "text" %}
+            <input type="text"
+                   name="{{ field_name }}"
+                   class="create-input"
+                   placeholder="{{ placeholder | default("入力") }}" />
+        {% endif %}
+        <button type="submit" name="action" value="{{ action }}">{{ button_text | default("送信") }}</button>
+    </form>
+{% endmacro %}
+{# =====================
+   子フォーム群
+   ===================== #}
+{% macro post_form(action, parent_id=None) %}
+    {{ template_form(action,
+        input_type="textarea",
+        placeholder="なにか書いて",
+        button_text="星屑を置く",
+        field_name="post_content",
+        parent_id=parent_id) }}
+{% endmacro %}
+{% macro page_form(action, parent_id=None) %}
+    {{ template_form(action,
+        input_type="text",
+        placeholder="input pagename",
+        button_text="星屑を開く",
+        field_name="page_content",
+        parent_id=parent_id) }}
+{% endmacro %}
+{% macro book_form(action, parent_id=None) %}
+    {{ template_form(action,
+        input_type="text",
+        placeholder="input bookname",
+        button_text="星屑を束ねる",
+        field_name="book_content",
+        parent_id=parent_id) }}
+{% endmacro %}
+{% macro shelf_form(action) %}
+    {{ template_form(action,
+        input_type="text",
+        placeholder="input shelfname",
+        button_text="星屑を並べる",
+        field_name="shelf_content") }}
+{% endmacro %}

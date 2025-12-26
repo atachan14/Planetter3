@@ -255,18 +255,33 @@ body {
 .user {
     color: #f00
 }
+.user .info{
+    color: #f99;
+}
 .post {
     color: #ff0
 }
-.post-content{
-    color:#ff0
+.post .info{
+    color:#ff9
 }
-.post-info{
-    color:#ffff99
+.page {
+    color: #00f
 }
-.user-info{
-    color: #ff9999;
+.page .info{
+    color: #55f
 }
+.book {
+    color: #090
+}
+.book .info{
+    color: #0f0
+}
+.shelf {
+    color: #c0f
+}
+ .shelf .info{
+    color: #ee77ff
+ }
 
 /* here */
 /* none */

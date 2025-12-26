@@ -1,18 +1,24 @@
+from datetime import timedelta
 from models.data import Object
 from models.data import User, Planet, UserCount,Tile, NoneTile, Object, Surround
 from services.spatial import SURROUND_BASE, rotate_delta, wrap_coord
 from errors import DomainDataError
 import logging
 
+
 logger = logging.getLogger(__name__)
 
+STARDUST_UNIT_SEC = 1 
 
 def fetch_now(cur):
     cur.execute("SELECT now()")
     return cur.fetchone()["now"]
 
 
-def fetch_user_data(cur, user_id, now) -> User | None:
+def fetch_latest_user_data(cur, user_id, db_now) -> User | None:
+
+    update_stardust(cur, user_id, db_now)
+
     cur.execute("""
         SELECT
             id,
@@ -40,8 +46,42 @@ def fetch_user_data(cur, user_id, now) -> User | None:
         direction=row["direction"],
         stardust=row["stardust"],
         created_at=row["created_at"],
-        now=now,
+        now=db_now,
     )
+
+
+def update_stardust(cur, user_id, db_now):
+    cur.execute("""
+        SELECT stardust, last_updated
+        FROM users
+        WHERE id = %s
+        FOR UPDATE
+    """, (user_id,))
+
+    row = cur.fetchone()
+    if not row:
+        raise DomainDataError("user not found")
+
+    last_stardust = row["stardust"]
+    last_date = row["last_updated"] or db_now
+
+    delta_sec = (db_now - last_date).total_seconds()
+    gain = int(delta_sec // STARDUST_UNIT_SEC)
+    if gain <= 0:
+        return
+ 
+    new_stardust = last_stardust + gain
+    new_updated_at = last_date + timedelta(
+        seconds=gain * STARDUST_UNIT_SEC
+    )
+
+    cur.execute("""
+        UPDATE users
+        SET stardust = %s,
+            last_updated = %s
+        WHERE id = %s
+    """, (new_stardust, new_updated_at, user_id))
+
 
 
 def fetch_user_at(cur, planet_id: int, x: int, y: int) -> User | None:

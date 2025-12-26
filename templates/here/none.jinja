@@ -1,4 +1,2 @@
-<div class="flex-column none-root">
-  {% set value = "post_to_tile" %}
-  {% include "parts/post_form.jinja" %}
-</div>
+{% from "parts/create_forms.jinja" import post_form %}
+<div class="none-root">{{ post_form("post_to_tile") }}</div>

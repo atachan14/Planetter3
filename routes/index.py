@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 from db import get_db
 from services.data import (
     fetch_now,
-    fetch_user_data,
+    fetch_latest_user_data,
     fetch_user_count,
     fetch_planet_data,
     fetch_surround_data,
@@ -16,7 +16,7 @@ from services.data import (
 )
 
 from services.action.auth import handle_login, handle_logout
-from services.action.move import handle_to_front, handle_turn
+from services.action.move import handle_to_front, handle_turn,handle_kill
 from services.action.object_create import (
     create_to_new_tile,
     create_to_parent,
@@ -41,12 +41,13 @@ def index_get():
     try:
         # 共通データ
         db_now = fetch_now(cur)
-        self_data = fetch_user_data(cur, self_id, db_now)
+        self_data = fetch_latest_user_data(cur, self_id, db_now)
         planet_data = fetch_planet_data(cur, self_data.planet_id,db_now)
 
     # デフォルト
         datas = {}
         dialog = session.pop("dialog", None)
+        result = session.pop("result", None)
 
         if state == "landing":
             content_template = "main_content/landing.jinja"
@@ -65,7 +66,7 @@ def index_get():
                 logger.warning("contact state without contact_target_id")
                 raise InvalidStateError("contact without target")
 
-            datas["target"] = fetch_user_data(cur, contact_target_id, db_now)
+            datas["target"] = fetch_latest_user_data(cur, contact_target_id, db_now)
             datas["count"] = fetch_user_count(cur,contact_target_id)
 
             content_template = "main_content/contact.jinja"
@@ -92,6 +93,7 @@ def index_get():
         datas=datas,
         state=state,
         dialog=dialog,
+        result = result,
     )
 
 

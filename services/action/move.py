@@ -1,7 +1,7 @@
 
 from services.data import (
     fetch_now,
-    fetch_user_data,
+    fetch_latest_user_data,
     fetch_planet_data,
     fetch_user_at,
 )
@@ -15,7 +15,7 @@ def handle_to_front(cur,session):
         raise InvalidStateError("to_front without login")
 
     now = fetch_now(cur)
-    self_data = fetch_user_data(cur, self_id, now)
+    self_data = fetch_latest_user_data(cur, self_id, now)
     planet_data = fetch_planet_data(cur, self_data.planet_id, now)
 
     # ここから前方判定
@@ -77,9 +77,40 @@ def handle_turn(cur, self_id, turn: int):
         (self_id,),
     )
 
-def handle_kill(cur, session,target_id):
-    # sessionにresult(stardustを入れる)
-    # stardustを加算する
+def handle_kill(cur, session, target_id):
+
+    self_id = session["self_id"]
+    # ① まず target の stardust を取得
+    cur.execute(
+        """
+        SELECT stardust
+        FROM users
+        WHERE id = %s
+        FOR UPDATE;
+        """,
+        (target_id,)
+    )
+    row = cur.fetchone()
+    if row is None:
+        # すでに存在しないなら何もしない or abort
+        return
+
+    gained = row["stardust"]
+
+    # ② session に結果を積む（表示用）
+    session["result"] = gained
+
+    # ③ 自分の stardust を加算
+    cur.execute(
+        """
+        UPDATE users
+        SET stardust = stardust + %s
+        WHERE id = %s
+        """,
+        (gained, self_id)
+    )
+
+    # ④ target を DELETE（ここで CASCADE 発動）
     cur.execute(
         """
         DELETE FROM users
@@ -87,3 +118,4 @@ def handle_kill(cur, session,target_id):
         """,
         (target_id,)
     )
+
