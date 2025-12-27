@@ -93,3 +93,11 @@ class Surround:
     s7: Tile
     s8: Tile
     s9: Tile
+    
+    
+@dataclass
+class ActionContext:
+    cur: any
+    session: dict
+    db_now: datetime
+    self_id: int | None

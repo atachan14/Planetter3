@@ -1,6 +1,6 @@
 
 from services.data import (
-    fetch_now,
+    fetch_db_now,
     fetch_latest_user_data,
     fetch_planet_data,
     fetch_user_at,
@@ -14,7 +14,7 @@ def handle_to_front(cur,session):
     if not self_id:
         raise InvalidStateError("to_front without login")
 
-    now = fetch_now(cur)
+    now = fetch_db_now(cur)
     self_data = fetch_latest_user_data(cur, self_id, now)
     planet_data = fetch_planet_data(cur, self_data.planet_id, now)
 

@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 from db import get_db
 from services.data import (
-    fetch_now,
+    fetch_db_now,
     fetch_latest_user_data,
     fetch_user_count,
     fetch_planet_data,
@@ -40,7 +40,7 @@ def index_get():
 
     try:
         # 共通データ
-        db_now = fetch_now(cur)
+        db_now = fetch_db_now(cur)
         self_data = fetch_latest_user_data(cur, self_id, db_now)
         planet_data = fetch_planet_data(cur, self_data.planet_id,db_now)
 
@@ -104,6 +104,8 @@ def index_post():
     action = request.form.get("action")
     print(action)
 
+    db_now = fetch_db_now
+    
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 

@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 STARDUST_UNIT_SEC = 1 
 
-def fetch_now(cur):
+def fetch_db_now(cur):
     cur.execute("SELECT now()")
     return cur.fetchone()["now"]
 
@@ -49,6 +49,13 @@ def fetch_latest_user_data(cur, user_id, db_now) -> User | None:
         now=db_now,
     )
 
+def fetch_user_pos(cur, user_id):
+    cur.execute("""
+        SELECT x, y, direction, planet_id
+        FROM users
+        WHERE id = %s
+    """, (user_id,))
+    return cur.fetchone()
 
 def update_stardust(cur, user_id, db_now):
     cur.execute("""
