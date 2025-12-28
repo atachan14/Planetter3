@@ -9,14 +9,17 @@ from errors import InvalidStateError
 from services.spatial import rotate_delta,wrap_coord
 
 
-def handle_to_front(cur,session):
-    self_id = session.get("self_id")
+def handle_to_front(ctx):
+    self_id = ctx.self_id
+    db_now = ctx.db_now
+    cur = ctx.cur
+    session = ctx.session
+
     if not self_id:
         raise InvalidStateError("to_front without login")
 
-    now = fetch_db_now(cur)
-    self_data = fetch_latest_user_data(cur, self_id, now)
-    planet_data = fetch_planet_data(cur, self_data.planet_id, now)
+    self_data = fetch_latest_user_data(cur, self_id, db_now)
+    planet_data = fetch_planet_data(cur, self_data.planet_id, db_now)
 
     # ここから前方判定
     dx, dy = 0, -1
@@ -56,9 +59,9 @@ def handle_walk(cur, self_data, wtx, wty):
         (self_data.id,),
     )
     
-def handle_turn(cur, self_id, turn: int):
-    if not self_id:
-        raise InvalidStateError("turn without login")
+def handle_turn(ctx, turn: int):
+    cur = ctx.cur
+    self_id = ctx.self_id
 
     cur.execute(
         """
@@ -77,9 +80,13 @@ def handle_turn(cur, self_id, turn: int):
         (self_id,),
     )
 
-def handle_kill(cur, session, target_id):
+def handle_kill(ctx):
 
-    self_id = session["self_id"]
+    session = ctx.session
+    cur = ctx.cur
+    self_id = ctx.self_id
+    target_id =session["contact_target_id"]
+
     # ① まず target の stardust を取得
     cur.execute(
         """

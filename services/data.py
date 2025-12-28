@@ -67,7 +67,7 @@ def update_stardust(cur, user_id, db_now):
 
     row = cur.fetchone()
     if not row:
-        raise DomainDataError("user not found")
+        return
 
     last_stardust = row["stardust"]
     last_date = row["last_updated"] or db_now

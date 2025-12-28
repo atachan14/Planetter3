@@ -2,9 +2,10 @@ from services.data import fetch_latest_user_data,fetch_db_now
 from errors import DomainDataError
 
 
-def create_to_new_tile(cur,*,user_id,kind,content):
-    
-    db_now = fetch_db_now(cur)
+def create_to_new_tile(ctx,*,kind,content):
+    user_id = ctx.self_id
+    db_now = ctx.db_now
+    cur = ctx.cur
     user_data=fetch_latest_user_data(cur,user_id,db_now)
 
     object_id = create_object(
@@ -21,9 +22,12 @@ def create_to_new_tile(cur,*,user_id,kind,content):
         y=user_data.y,
     )    
     
-def create_to_parent(cur,*,user_id,kind: str,content: str,parent_id: int):
+def create_to_parent(ctx,*,kind: str,content: str,parent_id: int):
 
-    db_now = fetch_db_now(cur)
+    user_id = ctx.self_id
+    db_now = ctx.db_now
+    cur = ctx.cur
+    
     user_data=fetch_latest_user_data(cur,user_id,db_now)
 
     object_id = create_object(
@@ -38,9 +42,11 @@ def create_to_parent(cur,*,user_id,kind: str,content: str,parent_id: int):
         child_id=object_id,
     )
 
-def create_to_tile_with_children(cur,*,user_id,kind,content):
-
-    db_now = fetch_db_now(cur)
+def create_to_tile_with_children(ctx,*,kind,content):
+    user_id = ctx.self_id
+    db_now = ctx.db_now
+    cur = ctx.cur
+    
     user = fetch_latest_user_data(cur, user_id, db_now)
 
     object_id = create_object(

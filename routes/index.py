@@ -1,11 +1,10 @@
-from flask import Blueprint, render_template, request, redirect, session, flash
-from psycopg2.extras import RealDictCursor
-from errors import AppError,InvalidStateError,OperationAborted
-import logging
-
-logger = logging.getLogger(__name__)
-
-from db import get_db
+from services.action.move import handle_to_front, handle_turn, handle_kill
+from services.action.object_create import (
+    create_to_new_tile,
+    create_to_parent,
+    create_to_tile_with_children,
+)
+from services.action.auth import handle_login, handle_logout
 from services.data import (
     fetch_db_now,
     fetch_latest_user_data,
@@ -14,14 +13,14 @@ from services.data import (
     fetch_surround_data,
     fetch_galaxy_data,
 )
+from models.data import ActionContext
+from db import get_db
+from flask import Blueprint, render_template, request, redirect, session, flash
+from psycopg2.extras import RealDictCursor
+from errors import AppError, InvalidStateError, OperationAborted
+import logging
 
-from services.action.auth import handle_login, handle_logout
-from services.action.move import handle_to_front, handle_turn,handle_kill
-from services.action.object_create import (
-    create_to_new_tile,
-    create_to_parent,
-    create_to_tile_with_children,
-)
+logger = logging.getLogger(__name__)
 
 
 index_bp = Blueprint("index", __name__)
@@ -42,7 +41,7 @@ def index_get():
         # 共通データ
         db_now = fetch_db_now(cur)
         self_data = fetch_latest_user_data(cur, self_id, db_now)
-        planet_data = fetch_planet_data(cur, self_data.planet_id,db_now)
+        planet_data = fetch_planet_data(cur, self_data.planet_id, db_now)
 
     # デフォルト
         datas = {}
@@ -53,7 +52,8 @@ def index_get():
             content_template = "main_content/landing.jinja"
 
         elif state == "planet":
-            datas["surround"] = fetch_surround_data(cur, self_data, planet_data)
+            datas["surround"] = fetch_surround_data(
+                cur, self_data, planet_data)
             content_template = "main_content/planet.jinja"
 
         elif state == "galaxy":
@@ -66,12 +66,12 @@ def index_get():
                 logger.warning("contact state without contact_target_id")
                 raise InvalidStateError("contact without target")
 
-            datas["target"] = fetch_latest_user_data(cur, contact_target_id, db_now)
-            datas["count"] = fetch_user_count(cur,contact_target_id)
+            datas["target"] = fetch_latest_user_data(
+                cur, contact_target_id, db_now)
+            datas["count"] = fetch_user_count(cur, contact_target_id)
 
             content_template = "main_content/contact.jinja"
-        
-        
+
         else:
             # 保険
             logger.warning(f"invalid state: {state}")
@@ -93,44 +93,46 @@ def index_get():
         datas=datas,
         state=state,
         dialog=dialog,
-        result = result,
+        result=result,
     )
 
 
 @index_bp.route("/", methods=["POST"])
 def index_post():
-
-    
     action = request.form.get("action")
-    print(action)
 
-    db_now = fetch_db_now
-    
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
+    db_now = fetch_db_now(cur)
+    self_id = session.get("self_id")
+
+    ctx = ActionContext(
+        cur=cur,
+        session=session,
+        db_now=db_now,
+        self_id=self_id,
+    )
 
     try:
-        auth(cur, action)
-        
-        # ここから先は「ログイン必須アクション」
-        self_id = session.get("self_id")
-        if self_id is None:
-            raise OperationAborted()
-        
-        dialog(action)        
-        landing(action)
-        move(cur, action,self_id)
-        contact(cur,action)
-        object_create(cur, action,self_id)
+        if action in TOP_ACTIONS:
+            TOP_ACTIONS[action](ctx)
 
-        conn.commit()   # ← 成功時のみ
-    
+        elif action in MAIN_ACTIONS:
+            if self_id is None:
+                raise OperationAborted()
+            MAIN_ACTIONS[action](ctx)
+
+        else:
+            raise OperationAborted()
+
+        conn.commit()
+
     except OperationAborted:
         conn.rollback()
         return redirect("/")
-    
+
     except AppError as e:
-        conn.rollback() # ← 失敗時
+        conn.rollback()
         return render_template("error.jinja", error_code=e.code)
 
     finally:
@@ -140,103 +142,138 @@ def index_post():
     return redirect("/")
 
 
-def auth(cur,action):
-    if action == "login":
-        handle_login(
-            cur,
-            request.form.get("username"),
-            request.form.get("password"),
-            session,
-        )
+# top_action
+def action_login(ctx: ActionContext):
+    handle_login(
+        ctx.cur,
+        request.form.get("username"),
+        request.form.get("password"),
+        ctx.session,
+    )
 
-    if action == "logout":
-        handle_logout(session)
 
-def dialog(action):
-    if action == "redirect":
-        raise OperationAborted()
+def action_logout(ctx: ActionContext):
+    handle_logout(ctx.session)
 
-def landing(action):
-    if action == "enter_planet":
-        session["state"] = "planet"
 
-def move(cur,action,self_id):
-    if action == "to_front":
-        handle_to_front(cur,session)
-    
-    if action == "turn_left":
-        handle_turn(cur,self_id,-1)
-    
-    if action == "turn_right":
-        handle_turn(cur,self_id,1)
+def action_redirect(ctx: ActionContext):
+    raise OperationAborted()
 
-def contact(cur,action):
-    if action =="kill":
-        session["dialog"] = {
+
+def action_enter_planet(ctx: ActionContext):
+    ctx.session["state"] = "planet"
+
+
+# main_action
+def action_to_front(ctx: ActionContext):
+    handle_to_front(ctx)
+
+
+def action_turn_left(ctx: ActionContext):
+    handle_turn(ctx, -1)
+
+
+def action_turn_right(ctx: ActionContext):
+    handle_turn(ctx, 1)
+
+
+def action_kill(ctx: ActionContext):
+    ctx.session["dialog"] = {
         "text": "殺されたアカウントは生き返りません。本当に殺しますか？",
         "options": [
             {"label": "やめる", "action": "redirect"},
             {"label": "殺す", "action": "killed"},
-            ]
-        }
-        
-    elif action =="killed":
-        session["state"]="killed"
-        handle_kill(cur,session["contact_target_id"])
+        ],
+    }
 
-        
-def object_create(cur,action,self_id):
-    if action == "post_to_tile":
-        print("post_to_tile",request.form.get("post_content"))
-        create_to_new_tile(
-            cur,
-            user_id=self_id,
-            kind="post",
-            content=request.form.get("post_content"),
-            )    
-    elif  action == "post_to_page":
 
-        create_to_parent(
-            cur,
-            user_id=self_id,
-            kind="post",
-            content=request.form.get("post_content"),
-            parent_id = int(request.form.get("parent_id"))
-            )        
-    elif  action == "page_to_tile":
-        create_to_tile_with_children(
-            cur,
-            user_id=self_id,
-            kind="page",
-            content=request.form.get("page_content"),
-            )
-    elif  action == "page_to_book":
-        create_to_parent(
-            cur,
-            user_id=self_id,
-            kind="page",
-            content=request.form.get("page_content"),
-            parent_id = int(request.form.get("parent_id"))
-            )
-    elif  action == "book_to_tile":
-        create_to_tile_with_children(
-            cur,
-            user_id=self_id,
-            kind="book",
-            content=request.form.get("book_content"),
-            )
-    elif  action == "book_to_shelf":
-        create_to_tile_with_children(
-            cur,
-            user_id=self_id,
-            kind="book",
-            content=request.form.get("book_content"),
-            parent_id = int(request.form.get("parent_id"))
-            )
-    elif  action == "shelf_to_tile":
-        create_to_tile_with_children(
-            cur,
-            user_id=self_id,
-            kind="shelf",
-            content=request.form.get("shelf_content"),
-            )
+def action_killed(ctx: ActionContext):
+    handle_kill(ctx)
+
+
+def action_post_to_tile(ctx: ActionContext):
+    create_to_new_tile(
+        ctx,
+        kind="post",
+        content=request.form.get("post_content"),
+    )
+
+
+def action_post_to_page(ctx: ActionContext):
+    create_to_parent(
+        ctx,
+        kind="post",
+        content=request.form.get("post_content"),
+        parent_id=int(request.form.get("parent_id")),
+    )
+
+
+def action_page_to_tile(ctx: ActionContext):
+    create_to_tile_with_children(
+        ctx,
+        kind="page",
+        content=request.form.get("page_content"),
+    )
+
+
+def action_page_to_book(ctx: ActionContext):
+    create_to_parent(
+        ctx,
+        kind="page",
+        content=request.form.get("page_content"),
+        parent_id=int(request.form.get("parent_id")),
+    )
+
+
+def action_book_to_tile(ctx: ActionContext):
+    create_to_tile_with_children(
+        ctx,
+        kind="book",
+        content=request.form.get("book_content"),
+    )
+
+
+def action_book_to_shelf(ctx: ActionContext):
+    create_to_tile_with_children(
+        ctx,
+        kind="book",
+        content=request.form.get("book_content"),
+        parent_id=int(request.form.get("parent_id")),
+    )
+
+
+def action_shelf_to_tile(ctx: ActionContext):
+    create_to_tile_with_children(
+        ctx,
+        kind="shelf",
+        content=request.form.get("shelf_content"),
+    )
+
+
+TOP_ACTIONS = {
+    "login": action_login,
+    "logout": action_logout,
+    "redirect": action_redirect,
+    "enter_planet": action_enter_planet,
+}
+
+MAIN_ACTIONS = {
+
+    # move
+    "to_front": action_to_front,
+    "turn_left": action_turn_left,
+    "turn_right": action_turn_right,
+
+    # contact
+    "kill": action_kill,
+    "killed": action_killed,
+
+    # object create
+    "post_to_tile": action_post_to_tile,
+    "post_to_page": action_post_to_page,
+    "page_to_tile": action_page_to_tile,
+    "page_to_book": action_page_to_book,
+    "book_to_tile": action_book_to_tile,
+    "book_to_shelf": action_book_to_shelf,
+    "shelf_to_tile": action_shelf_to_tile,
+}

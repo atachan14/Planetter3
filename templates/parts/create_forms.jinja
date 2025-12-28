@@ -4,7 +4,7 @@
 {% macro template_form(
     action,
     input_type="textarea",
-    rows=None,
+    rows=4,
     placeholder=None,
     button_text=None,
     field_name="post_content",
@@ -14,7 +14,7 @@
         {% if parent_id is not none %}<input type="hidden" name="parent_id" value="{{ parent_id }}">{% endif %}
         {% if input_type == "textarea" %}
             <textarea name="{{ field_name }}"
-                      class="create-textarea"
+                      class="create-input"
                       rows="{{ rows | default(5) }}"
                       placeholder="{{ placeholder | default('なんか書いて') }}"></textarea>
         {% elif input_type == "text" %}
