@@ -1,5 +1,5 @@
 
-from services.data import (
+from DAO.fetchs import (
     fetch_db_now,
     fetch_latest_user_data,
     fetch_planet_data,
