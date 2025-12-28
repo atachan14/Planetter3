@@ -6,7 +6,7 @@ from services.data import (
     fetch_user_at,
 )
 from errors import InvalidStateError
-from services.spatial import rotate_delta,wrap_coord
+from services.spatial import rotate_delta, wrap_coord
 
 
 def handle_to_front(ctx):
@@ -36,9 +36,10 @@ def handle_to_front(ctx):
     else:
         handle_walk(cur, self_data, wtx, wty)
 
-def handle_contact(session,target_user):
-    session["state"]="contact"
-    session["contact_target_id"]=target_user.id
+
+def handle_contact(session, target_user):
+    session["state"] = "contact"
+    session["contact_target_id"] = target_user.id
 
 
 def handle_walk(cur, self_data, wtx, wty):
@@ -58,7 +59,8 @@ def handle_walk(cur, self_data, wtx, wty):
         """,
         (self_data.id,),
     )
-    
+
+
 def handle_turn(ctx, turn: int):
     cur = ctx.cur
     self_id = ctx.self_id
@@ -80,32 +82,27 @@ def handle_turn(ctx, turn: int):
         (self_id,),
     )
 
+
 def handle_kill(ctx):
 
     session = ctx.session
     cur = ctx.cur
     self_id = ctx.self_id
-    target_id =session["contact_target_id"]
+    target_id = session["contact_target_id"]
 
     # ① まず target の stardust を取得
-    cur.execute(
-        """
-        SELECT stardust
-        FROM users
-        WHERE id = %s
-        FOR UPDATE;
-        """,
-        (target_id,)
-    )
-    row = cur.fetchone()
-    if row is None:
+    db_now = fetch_db_now(cur)
+    target = fetch_latest_user_data(cur, target_id, db_now)
+    if target is None:
         # すでに存在しないなら何もしない or abort
         return
 
-    gained = row["stardust"]
+    gained = target.stardust
 
-    # ② session に結果を積む（表示用）
-    session["result"] = gained
+    # ② pops に結果を積む（表示用）
+    pops = ctx.session.get("pops", {})
+    pops["get_stardust_by_kill"] = gained
+    session["pops"] = pops
 
     # ③ 自分の stardust を加算
     cur.execute(
@@ -116,7 +113,15 @@ def handle_kill(ctx):
         """,
         (gained, self_id)
     )
-
+    # ⑤ count.kill を増やす
+    cur.execute(
+        """
+        UPDATE user_counts
+        SET kill = kill + 1
+        WHERE user_id = %s
+        """,
+        (self_id,)
+    )
     # ④ target を DELETE（ここで CASCADE 発動）
     cur.execute(
         """
@@ -125,4 +130,3 @@ def handle_kill(ctx):
         """,
         (target_id,)
     )
-

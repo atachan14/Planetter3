@@ -45,8 +45,7 @@ def index_get():
 
     # デフォルト
         datas = {}
-        dialog = session.pop("dialog", None)
-        result = session.pop("result", None)
+        pops = session.pop("pops", {})
 
         if state == "landing":
             content_template = "main_content/landing.jinja"
@@ -89,11 +88,10 @@ def index_get():
         content_template=content_template,
         self_data=self_data,
         planet_data=planet_data,
-
-        datas=datas,
+        
         state=state,
-        dialog=dialog,
-        result=result,
+        datas=datas,
+        pops=pops,
     )
 
 
@@ -178,13 +176,15 @@ def action_turn_right(ctx: ActionContext):
 
 
 def action_kill(ctx: ActionContext):
-    ctx.session["dialog"] = {
+    pops = ctx.session.get("pops", {})
+    pops["dialog"] = {
         "text": "殺されたアカウントは生き返りません。本当に殺しますか？",
         "options": [
             {"label": "やめる", "action": "redirect"},
             {"label": "殺す", "action": "killed"},
         ],
     }
+    session["pops"] = pops
 
 
 def action_killed(ctx: ActionContext):
