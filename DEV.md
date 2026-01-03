@@ -1,7 +1,9 @@
 # 開発予定
     - 共通
         - 基本
-            - stardust
+            - book
+                - pager
+                -
             - destroy
             - rocket
                 - galaxyMap
