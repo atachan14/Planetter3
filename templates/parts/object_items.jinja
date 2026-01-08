@@ -43,7 +43,8 @@
     <div class="page-item book-back">{{ page_form("page_to_book") }}</div>
 {% endmacro %}
 {% macro book_pager(current_page, total_pages) %}
-    <div class="book-pager">
+    <form class="book-pager"  method="post" action="/">
+        <input type="hidden" name="action" value="page-select">
         {% set last = total_pages - 1 %}
         {# --- 先頭 --- #}
         <button name="page"
@@ -71,7 +72,7 @@
                     value="{{ last }}"
                     class="pager-item {% if current_page == last %}active{% endif %}">{{ last }}</button>
         {% endif %}
-    </div>
+    </form>
 {% endmacro %}
 {% macro book_item(node,pops) %}
     {% set current_page = pops.current_page | default(0) | int %}
