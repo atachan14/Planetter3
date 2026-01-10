@@ -101,8 +101,13 @@ def handle_kill(ctx):
 
     # ② pops に結果を積む（表示用）
     pops = ctx.session.get("pops", {})
-    pops["get_stardust_by_kill"] = gained
     session["pops"] = pops
+    pops["dialog"] = {
+        "text": f"星屑を{gained}獲得した！",
+        "options": [
+            {"label": "了解！", "action": "redirect"},
+        ],
+    }
 
     # ③ 自分の stardust を加算
     cur.execute(

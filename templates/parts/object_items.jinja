@@ -31,54 +31,54 @@
     </div>
 {% endmacro %}
 {% macro book_cover(node) %}
-    <div class="page-item book-cover">
-        <div class="book-content">{{ node.content }}</div>
-        {{ item_info(node) }}
-    </div>
+    <div class="page-item book-cover">{{ item_info(node) }}</div>
 {% endmacro %}
 {% macro book_page(page_node) %}
     <div class="page-item book-page">{{ page_item(page_node) }}</div>
 {% endmacro %}
 {% macro book_back(node) %}
-    <div class="page-item book-back">{{ page_form("page_to_book") }}</div>
+    <div class="page-item book-back">{{ page_form("page_to_book", parent_id=node.id) }}</div>
 {% endmacro %}
 {% macro book_pager(current_page, total_pages) %}
     <form class="book-pager"  method="post" action="/">
-        <input type="hidden" name="action" value="page-select">
+        <input type="hidden" name="action" value="page_select">
         {% set last = total_pages - 1 %}
         {# --- 先頭 --- #}
-        <button name="page"
+        <button name="current_page"
                 value="0"
                 class="pager-item {% if current_page == 0 %}active{% endif %}">0</button>
         {# --- 前側の省略 --- #}
         {% if current_page >= 3 %}<span class="pager-sep">-</span>{% endif %}
         {# --- current 前 --- #}
         {% if current_page - 1 > 0 %}
-            <button name="page" value="{{ current_page - 1 }}" class="pager-item">{{ current_page - 1 }}</button>
+            <button name="current_page" value="{{ current_page - 1 }}" class="pager-item">{{ current_page - 1 }}</button>
         {% endif %}
         {# --- current --- #}
         {% if current_page != 0 and current_page != last %}
-            <button name="page" value="{{ current_page }}" class="pager-item active">{{ current_page }}</button>
+            <button name="current_page"
+                    value="{{ current_page }}"
+                    class="pager-item active">{{ current_page }}</button>
         {% endif %}
         {# --- current 後 --- #}
         {% if current_page + 1 < last %}
-            <button name="page" value="{{ current_page + 1 }}" class="pager-item">{{ current_page + 1 }}</button>
+            <button name="current_page" value="{{ current_page + 1 }}" class="pager-item">{{ current_page + 1 }}</button>
         {% endif %}
         {# --- 後側の省略 --- #}
         {% if current_page <= last - 3 %}<span class="pager-sep">-</span>{% endif %}
         {# --- 最後 --- #}
         {% if last != 0 %}
-            <button name="page"
+            <button name="current_page"
                     value="{{ last }}"
                     class="pager-item {% if current_page == last %}active{% endif %}">{{ last }}</button>
         {% endif %}
     </form>
 {% endmacro %}
-{% macro book_item(node,pops) %}
-    {% set current_page = pops.current_page | default(0) | int %}
+{% macro book_item(node,here_state) %}
+    {% set current_page = here_state.current_page | default(0) | int %}
     {% set child_count = node.children | length %}
     {% set total_pages = child_count + 2 %} {# 表紙 + 子 + 背表紙 #}
     <div class="book item">
+        <div class="book-content">{{ node.content }}</div>
         {# 表示ページ #}
         {% if current_page == 0 %}
             {{ book_cover(node) }}

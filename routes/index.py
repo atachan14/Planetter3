@@ -17,7 +17,7 @@ from models.data import ActionContext
 from db import get_db
 from flask import Blueprint, render_template, request, redirect, session, flash
 from psycopg2.extras import RealDictCursor
-from errors import AppError, InvalidStateError, OperationAborted
+from errors import AppError, InvalidStateError, OperationAborted,StardustNotEnough
 import logging
 
 logger = logging.getLogger(__name__)
@@ -46,6 +46,9 @@ def index_get():
     # デフォルト
         datas = {}
         pops = session.pop("pops", {})
+        here_state = session.get("here_state",{})
+        print(pops)
+        print(here_state)
 
         if state == "landing":
             content_template = "main_content/landing.jinja"
@@ -83,6 +86,7 @@ def index_get():
         cur.close()
         conn.close()
 
+
     return render_template(
         "main.jinja",
         content_template=content_template,
@@ -92,6 +96,7 @@ def index_get():
         state=state,
         datas=datas,
         pops=pops,
+        here_state=here_state,
     )
 
 
@@ -132,6 +137,18 @@ def index_post():
     except AppError as e:
         conn.rollback()
         return render_template("error.jinja", error_code=e.code)
+
+    except StardustNotEnough as e:
+        conn.rollback()
+        pops = session.get("pops", {})
+        session["pops"] = pops
+        pops["dialog"] = {
+            "text": "星屑が足りない。",
+            "options": [
+                {"label": "戻る", "action": "redirect"},
+            ],
+        }
+        return redirect("/")
 
     finally:
         cur.close()
@@ -249,6 +266,11 @@ def action_shelf_to_tile(ctx: ActionContext):
         content=request.form.get("shelf_content"),
     )
 
+def action_page_select(ctx):
+    here_state = ctx.session.setdefault("here_state", {})
+    here_state["current_page"] = int(request.form["current_page"])
+    ctx.session.modified = True
+
 
 TOP_ACTIONS = {
     "login": action_login,
@@ -276,4 +298,8 @@ MAIN_ACTIONS = {
     "book_to_tile": action_book_to_tile,
     "book_to_shelf": action_book_to_shelf,
     "shelf_to_tile": action_shelf_to_tile,
+
+    # object_index_select
+    "page_select": action_page_select,
 }
+

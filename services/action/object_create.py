@@ -1,5 +1,5 @@
 from services.data import fetch_latest_user_data,fetch_db_now
-from errors import DomainDataError
+from errors import DomainDataError,StardustNotEnough
 
 
 def create_to_new_tile(ctx,*,kind,content):
@@ -12,7 +12,7 @@ def create_to_new_tile(ctx,*,kind,content):
         cur,
         kind=kind,
         content=content,
-        created_name=user_data.username,
+        user_data=user_data,
     )
     attach_object_to_new_tile(
         cur,
@@ -34,7 +34,7 @@ def create_to_parent(ctx,*,kind: str,content: str,parent_id: int):
         cur,
         kind=kind,
         content=content,
-        created_name=user_data.username,
+        user_data=user_data,
     )
     attach_object_to_parent(
         cur,
@@ -53,7 +53,7 @@ def create_to_tile_with_children(ctx,*,kind,content):
         cur,
         kind=kind,
         content=content,
-        created_name=user.username,
+        user_data=user,
     )
 
     attach_object_to_tile_with_children(
@@ -66,13 +66,52 @@ def create_to_tile_with_children(ctx,*,kind,content):
 
 
 
-def create_object(cur, *, kind: str, content: str, created_name: str) -> int:
+def create_object(
+    cur,
+    *,
+    kind: str,
+    content: str,
+    user_data,
+) -> int:
+    
+        # stardust消費
+    OBJECT_PLACE = {
+        "post" : 1,
+        "page" : 1000,
+        "book" : 1000000,
+        "shelf" : 1000000000,
+    }
+    cost = OBJECT_PLACE[kind]
+
+    if user_data.stardust < cost:
+        raise StardustNotEnough()
+    
+    cur.execute("""
+    UPDATE users
+    SET stardust = stardust - %s
+    WHERE id = %s
+    """, (cost, user_data.id))
+
+
+    # ① object 作成
     cur.execute("""
         INSERT INTO objects (kind, content, created_name, created_at)
         VALUES (%s, %s, %s, NOW())
         RETURNING id
-    """, (kind, content, created_name))
-    return cur.fetchone()["id"]
+    """, (kind, content, user_data.username))
+
+    object_id = cur.fetchone()["id"]
+
+    # count増加   
+    cur.execute(f"""
+        UPDATE user_counts
+        SET {kind} = {kind} + 1
+        WHERE user_id = %s
+    """, (user_data.id,))
+
+
+
+    return object_id
 
 def attach_object_to_new_tile(cur, *, object_id: int, planet_id: int, x: int, y: int):
     cur.execute("""

@@ -16,3 +16,6 @@ class MissingNowError(DomainDataError):
 
 class OperationAborted(Exception):
     pass
+
+class StardustNotEnough(Exception):
+    pass
